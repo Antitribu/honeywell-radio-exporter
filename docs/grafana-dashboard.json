@@ -11,18 +11,27 @@
           "name": "zone",
           "type": "query",
           "label": "Zone",
-          "datasource": "Prometheus",
-          "query": "label_values(ramses_zone_info, zone_name)",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "query": {
+            "query": "label_values(ramses_zone_info, zone_name)",
+            "refId": "PrometheusVariableQueryEditor-VariableQuery"
+          },
           "refresh": 1,
+          "regex": "",
           "multi": true,
           "includeAll": true,
           "allValue": ".*",
           "current": {
+            "selected": true,
             "text": "All",
             "value": "$__all"
           },
           "options": [],
-          "sort": 1
+          "sort": 1,
+          "skipUrlSync": false
         }
       ]
     },
