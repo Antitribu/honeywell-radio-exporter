@@ -1,3 +1,11 @@
+# Warning
+
+*********************
+Heavy use of vibe coding involved, this project is mostly me testing workflows around AI more than 
+actually delivering working code. YMMV, no warranties, not reviewed, past results do not guarantee
+future results, contact a doctor if it lasts longer than 4 hours.
+*********************
+
 # Honeywell Radio Exporter
 
 A Python module that uses the `ramses_rf` library to listen to RAMSES RF messages and expose metrics
