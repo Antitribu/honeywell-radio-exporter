@@ -190,6 +190,18 @@
         "linewidth": 2
       },
       {
+        "id": 25,
+        "title": "Temperature Related",
+        "type": "row",
+        "collapsed": false,
+        "gridPos": {
+          "h": 1,
+          "w": 24,
+          "x": 0,
+          "y": 24
+        }
+      },
+      {
         "id": 8,
         "title": "Device Temperatures",
         "type": "graph",
@@ -203,7 +215,7 @@
           "h": 8,
           "w": 12,
           "x": 0,
-          "y": 24
+          "y": 25
         },
         "yaxes": [
           {
@@ -213,7 +225,59 @@
         ],
         "lines": true,
         "points": false,
-        "linewidth": 2
+        "linewidth": 2,
+        "legend": {
+          "show": true,
+          "alignAsTable": true,
+          "rightSide": true,
+          "avg": true,
+          "min": true,
+          "max": true,
+          "current": false,
+          "total": false,
+          "values": true
+        }
+      },
+      {
+        "id": 15,
+        "title": "Zone Setpoint vs Temperature",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "ramses_device_setpoint_celsius * on(zone_idx) group_left(zone_name) ramses_zone_info{zone_name=~\"$zone\"}",
+            "legendFormat": "{{zone_name}} setpoint"
+          },
+          {
+            "expr": "ramses_device_temperature_celsius * on(device_id) group_left(device_name) ramses_device_info",
+            "legendFormat": "{{device_name}} actual"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 25
+        },
+        "yaxes": [
+          {
+            "format": "celsius",
+            "label": "Temperature"
+          }
+        ],
+        "lines": true,
+        "points": false,
+        "linewidth": 2,
+        "legend": {
+          "show": true,
+          "alignAsTable": true,
+          "rightSide": true,
+          "avg": true,
+          "min": true,
+          "max": true,
+          "current": false,
+          "total": false,
+          "values": true
+        }
       },
       {
         "id": 9,
@@ -228,8 +292,8 @@
         "gridPos": {
           "h": 8,
           "w": 12,
-          "x": 12,
-          "y": 24
+          "x": 0,
+          "y": 33
         },
         "yaxes": [
           {
@@ -256,8 +320,8 @@
         "gridPos": {
           "h": 6,
           "w": 8,
-          "x": 0,
-          "y": 32
+          "x": 12,
+          "y": 33
         },
         "fieldConfig": {
           "defaults": {
@@ -303,8 +367,8 @@
         "gridPos": {
           "h": 6,
           "w": 8,
-          "x": 8,
-          "y": 32
+          "x": 0,
+          "y": 41
         },
         "yaxes": [
           {
@@ -329,8 +393,8 @@
         "gridPos": {
           "h": 6,
           "w": 8,
-          "x": 16,
-          "y": 32
+          "x": 8,
+          "y": 41
         },
         "fieldConfig": {
           "defaults": {
@@ -369,9 +433,9 @@
         ],
         "gridPos": {
           "h": 8,
-          "w": 12,
-          "x": 0,
-          "y": 38
+          "w": 8,
+          "x": 16,
+          "y": 41
         }
       },
       {
@@ -387,9 +451,9 @@
         ],
         "gridPos": {
           "h": 8,
-          "w": 12,
-          "x": 12,
-          "y": 38
+          "w": 24,
+          "x": 0,
+          "y": 49
         },
         "transformations": [
           {
@@ -421,36 +485,6 @@
         ]
       },
       {
-        "id": 15,
-        "title": "Zone Setpoint vs Temperature",
-        "type": "graph",
-        "targets": [
-          {
-            "expr": "ramses_device_setpoint_celsius * on(zone_idx) group_left(zone_name) ramses_zone_info{zone_name=~\"$zone\"}",
-            "legendFormat": "{{zone_name}} setpoint"
-          },
-          {
-            "expr": "ramses_device_temperature_celsius * on(device_id) group_left(device_name) ramses_device_info",
-            "legendFormat": "{{device_name}} actual"
-          }
-        ],
-        "gridPos": {
-          "h": 8,
-          "w": 12,
-          "x": 0,
-          "y": 46
-        },
-        "yaxes": [
-          {
-            "format": "celsius",
-            "label": "Temperature"
-          }
-        ],
-        "lines": true,
-        "points": false,
-        "linewidth": 2
-      },
-      {
         "id": 16,
         "title": "Zone Window Status",
         "type": "stat",
@@ -463,8 +497,8 @@
         "gridPos": {
           "h": 8,
           "w": 6,
-          "x": 12,
-          "y": 46
+          "x": 0,
+          "y": 57
         },
         "fieldConfig": {
           "defaults": {
@@ -503,8 +537,8 @@
         "gridPos": {
           "h": 8,
           "w": 6,
-          "x": 18,
-          "y": 46
+          "x": 6,
+          "y": 57
         },
         "fieldConfig": {
           "defaults": {
@@ -549,8 +583,8 @@
         "gridPos": {
           "h": 8,
           "w": 12,
-          "x": 0,
-          "y": 54
+          "x": 12,
+          "y": 57
         },
         "transformations": [
           {
@@ -613,9 +647,9 @@
         ],
         "gridPos": {
           "h": 8,
-          "w": 12,
-          "x": 12,
-          "y": 54
+          "w": 24,
+          "x": 0,
+          "y": 65
         },
         "transformations": [
           {
