@@ -575,9 +575,16 @@
         "type": "table",
         "targets": [
           {
-            "expr": "time() - ramses_device_last_seen_timestamp",
+            "expr": "time() - ramses_device_last_seen_timestamp * on(device_id) group_left(device_name) ramses_device_info",
             "format": "table",
-            "instant": true
+            "instant": true,
+            "refId": "A"
+          },
+          {
+            "expr": "ramses_device_setpoint_celsius * on(device_id) group_left(device_name) ramses_device_info * on(zone_idx) group_left(zone_name) ramses_zone_info * 0 + 1",
+            "format": "table",
+            "instant": true,
+            "refId": "B"
           }
         ],
         "gridPos": {
@@ -588,6 +595,10 @@
         },
         "transformations": [
           {
+            "id": "merge",
+            "options": {}
+          },
+          {
             "id": "organize",
             "options": {
               "excludeByName": {
@@ -595,43 +606,66 @@
                 "job": true,
                 "instance": true,
                 "monitor": true,
-                "origin_prometheus": true
+                "origin_prometheus": true,
+                "Value #B": true,
+                "zone_idx": true
               },
               "indexByName": {
                 "device_id": 0,
-                "Value": 1
+                "device_name": 1,
+                "zone_name": 2,
+                "Value #A": 3
               },
               "renameByName": {
                 "device_id": "Device ID",
-                "Value": "Seconds Since Last Seen"
+                "device_name": "Device Name",
+                "zone_name": "Zone",
+                "Value #A": "Seconds Since Last Seen"
               }
             }
           }
         ],
         "fieldConfig": {
           "defaults": {
-            "unit": "s",
             "custom": {
-              "displayMode": "color-background"
-            },
-            "thresholds": {
-              "mode": "absolute",
-              "steps": [
+              "displayMode": "color-background",
+              "align": "auto"
+            }
+          },
+          "overrides": [
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "Seconds Since Last Seen"
+              },
+              "properties": [
                 {
-                  "value": 0,
-                  "color": "green"
+                  "id": "unit",
+                  "value": "s"
                 },
                 {
-                  "value": 300,
-                  "color": "yellow"
-                },
-                {
-                  "value": 600,
-                  "color": "red"
+                  "id": "thresholds",
+                  "value": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": 0,
+                        "color": "green"
+                      },
+                      {
+                        "value": 300,
+                        "color": "yellow"
+                      },
+                      {
+                        "value": 600,
+                        "color": "red"
+                      }
+                    ]
+                  }
                 }
               ]
             }
-          }
+          ]
         }
       },
       {
