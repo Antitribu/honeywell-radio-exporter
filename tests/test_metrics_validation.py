@@ -290,6 +290,58 @@ def test_zone_name_data_exists():
                 )
 
 
+def test_zone_name_office_in_generated_metrics():
+    """
+    Validate that 'Office' zone name appears in generated metrics.
+
+    This test depends on generated.txt existing (from test_sample_data_metrics_generation).
+    It checks that ramses_zone_info contains a metric with zone_name="Office".
+    """
+    test_dir = Path(__file__).parent
+    output_file = test_dir / "sample_data" / "generated.txt"
+
+    # Ensure the generated file exists
+    if not output_file.exists():
+        pytest.skip("generated.txt does not exist. Run test_sample_data_metrics_generation first.")
+
+    # Read the generated metrics
+    with open(output_file, "r") as f:
+        content = f.read()
+
+    # Check for ramses_zone_info metric with Office label
+    has_zone_info = "ramses_zone_info" in content
+    assert has_zone_info, "ramses_zone_info metric not found in generated output"
+
+    # Look for the Office zone specifically
+    has_office = 'zone_name="Office"' in content
+
+    if not has_office:
+        # Print available zone names for debugging
+        import re
+
+        zone_names = re.findall(r'zone_name="([^"]+)"', content)
+        unique_zones = set(zone_names)
+        pytest.fail(
+            f"Zone name 'Office' not found in ramses_zone_info metric. "
+            f"Available zone names: {sorted(unique_zones)}"
+        )
+
+    # Verify the full metric line exists
+    office_metric_pattern = r'ramses_zone_info\{zone_idx="[^"]+",zone_name="Office"\} 1\.0'
+    import re
+
+    office_metrics = re.findall(office_metric_pattern, content)
+
+    assert len(office_metrics) > 0, (
+        f"Expected at least one ramses_zone_info metric with zone_name='Office', "
+        f"found {len(office_metrics)}"
+    )
+
+    print(f"\n✓ Found {len(office_metrics)} Office zone metric(s):")
+    for metric in office_metrics:
+        print(f"  {metric}")
+
+
 def test_all_metrics_summary():
     """Generate a comprehensive summary of what data exists vs what's captured."""
     test_dir = Path(__file__).parent
