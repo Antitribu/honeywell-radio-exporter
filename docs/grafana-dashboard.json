@@ -51,7 +51,10 @@
           "w": 12,
           "x": 0,
           "y": 0
-        }
+        },
+        "lines": true,
+        "points": false,
+        "linewidth": 2
       },
       {
         "id": 2,
@@ -89,7 +92,10 @@
           "w": 6,
           "x": 18,
           "y": 0
-        }
+        },
+        "lines": true,
+        "points": false,
+        "linewidth": 2
       },
       {
         "id": 4,
@@ -154,7 +160,10 @@
           "w": 12,
           "x": 0,
           "y": 16
-        }
+        },
+        "lines": true,
+        "points": false,
+        "linewidth": 2
       },
       {
         "id": 7,
@@ -175,7 +184,10 @@
           "w": 12,
           "x": 12,
           "y": 16
-        }
+        },
+        "lines": true,
+        "points": false,
+        "linewidth": 2
       },
       {
         "id": 8,
@@ -198,7 +210,10 @@
             "format": "celsius",
             "label": "Temperature"
           }
-        ]
+        ],
+        "lines": true,
+        "points": false,
+        "linewidth": 2
       },
       {
         "id": 9,
@@ -223,7 +238,10 @@
             "min": 0,
             "max": 100
           }
-        ]
+        ],
+        "lines": true,
+        "points": false,
+        "linewidth": 2
       },
       {
         "id": 10,
@@ -293,7 +311,10 @@
             "format": "short",
             "label": "Messages/min"
           }
-        ]
+        ],
+        "lines": true,
+        "points": false,
+        "linewidth": 2
       },
       {
         "id": 12,
@@ -424,7 +445,10 @@
             "format": "celsius",
             "label": "Temperature"
           }
-        ]
+        ],
+        "lines": true,
+        "points": false,
+        "linewidth": 2
       },
       {
         "id": 16,
