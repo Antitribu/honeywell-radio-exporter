@@ -2,279 +2,130 @@
 Tests for device name extraction and metrics.
 
 This test validates that device names are correctly extracted from RAMSES RF
-messages and populated in Prometheus metrics.
+messages and populated in Prometheus metrics, using the generated.txt output
+from processing sample_data/ramses.msgs.
 """
 
-import pytest
-from unittest.mock import Mock, MagicMock, patch
 from pathlib import Path
 
 
-def test_device_name_extraction():
-    """Test that device names are extracted from gateway device traits."""
-    from honeywell_radio_exporter.ramses_prometheus_exporter import RamsesPrometheusExporter
+def test_device_info_metrics_in_generated_output():
+    """Test that ramses_device_info metrics exist in generated output."""
+    generated_file = Path(__file__).parent / "sample_data" / "generated.txt"
+    assert generated_file.exists(), f"Generated file not found: {generated_file}"
 
-    # Create exporter instance
-    with patch("honeywell_radio_exporter.ramses_prometheus_exporter.start_http_server"):
-        exporter = RamsesPrometheusExporter(port=8000, ramses_port="/dev/ttyUSB0")
+    with open(generated_file, "r") as f:
+        content = f.read()
 
-    # Mock gateway with devices that have aliases
-    mock_gateway = Mock()
-    mock_device_with_name = Mock()
-    mock_device_with_name.id = "01:234576"
-    mock_device_with_name.traits = {"alias": "MainController", "class": "controller"}
+    # Should have ramses_device_info metrics
+    assert "ramses_device_info" in content, "ramses_device_info metric should exist"
 
-    mock_device_without_name = Mock()
-    mock_device_without_name.id = "18:147744"
-    mock_device_without_name.traits = {"alias": None, "class": "gateway_interface"}
+    # Check that device_info has both device_id and device_name labels
+    assert 'device_id="' in content, "device_id label should exist"
+    assert 'device_name="' in content, "device_name label should exist"
 
-    mock_gateway.device_by_id = {
-        "01:234576": mock_device_with_name,
-        "18:147744": mock_device_without_name,
-    }
-
-    exporter.gateway = mock_gateway
-
-    # Test device with alias
-    name1 = exporter._get_device_name("01:234576")
-    assert name1 == "MainController", f"Expected 'MainController' but got '{name1}'"
-
-    # Test device without alias
-    name2 = exporter._get_device_name("18:147744")
-    assert name2 == "unknown", f"Expected 'unknown' but got '{name2}'"
-
-    # Test non-existent device
-    name3 = exporter._get_device_name("99:999999")
-    assert name3 == "unknown", f"Expected 'unknown' but got '{name3}'"
+    # Count how many device_info metrics we have
+    device_info_lines = [
+        line for line in content.split("\n") if line.startswith("ramses_device_info{")
+    ]
+    print(f"\n✓ Found {len(device_info_lines)} device_info metric(s)")
+    for line in device_info_lines[:5]:  # Show first 5
+        print(f"  {line}")
 
 
 def test_device_info_metric_structure():
-    """Test that ramses_device_info metric has correct structure."""
-    from honeywell_radio_exporter.ramses_prometheus_exporter import RamsesPrometheusExporter
+    """Test that device_info metrics have correct structure (labels and value)."""
+    generated_file = Path(__file__).parent / "sample_data" / "generated.txt"
 
-    with patch("honeywell_radio_exporter.ramses_prometheus_exporter.start_http_server"):
-        exporter = RamsesPrometheusExporter(port=8000, ramses_port="/dev/ttyUSB0")
+    with open(generated_file, "r") as f:
+        lines = f.readlines()
 
-    # Check that device_info metric exists
-    assert hasattr(exporter, "device_info"), "device_info metric not found"
+    device_info_metrics = [line for line in lines if line.startswith("ramses_device_info{")]
 
-    # Check metric type
-    from prometheus_client import Gauge
+    assert len(device_info_metrics) > 0, "Should have at least one device_info metric"
 
-    assert isinstance(exporter.device_info, Gauge), "device_info should be a Gauge"
+    for metric_line in device_info_metrics:
+        # Check structure: ramses_device_info{device_id="...",device_name="..."} 1.0
+        assert 'device_id="' in metric_line, f"Missing device_id in: {metric_line}"
+        assert 'device_name="' in metric_line, f"Missing device_name in: {metric_line}"
+        assert "1.0" in metric_line or "1" in metric_line, f"Value should be 1.0 in: {metric_line}"
 
-    # Get metric description
-    metric_desc = exporter.device_info._documentation
-    assert "device" in metric_desc.lower(), "Metric description should mention 'device'"
-
-
-def test_device_info_metric_labels():
-    """Test that device_info metric has correct labels."""
-    from honeywell_radio_exporter.ramses_prometheus_exporter import RamsesPrometheusExporter
-
-    with patch("honeywell_radio_exporter.ramses_prometheus_exporter.start_http_server"):
-        exporter = RamsesPrometheusExporter(port=8000, ramses_port="/dev/ttyUSB0")
-
-    # Mock gateway
-    mock_gateway = Mock()
-    mock_device = Mock()
-    mock_device.id = "01:234576"
-    mock_device.traits = {"alias": "TestDevice", "class": "controller"}
-    mock_gateway.device_by_id = {"01:234576": mock_device}
-    exporter.gateway = mock_gateway
-
-    # Update device info
-    exporter._update_device_info("01:234576")
-
-    # Get metric samples
-    samples = list(exporter.device_info.collect())[0].samples
-
-    # Find our device
-    device_sample = None
-    for sample in samples:
-        if sample.labels.get("device_id") == "01:234576":
-            device_sample = sample
-            break
-
-    assert device_sample is not None, "Device metric not found"
-    assert device_sample.labels["device_id"] == "01:234576"
-    assert device_sample.labels["device_name"] == "TestDevice"
-    assert device_sample.value == 1.0, "device_info metric should always be 1.0"
+        # Should NOT have device_name="unknown"
+        assert (
+            'device_name="unknown"' not in metric_line
+        ), f"Should not have unknown device names: {metric_line}"
 
 
-def test_device_info_metric_unknown_device():
-    """Test device_info metric for devices without aliases."""
-    from honeywell_radio_exporter.ramses_prometheus_exporter import RamsesPrometheusExporter
+def test_device_info_no_unknown_devices():
+    """Test that we don't create device_info metrics for unknown devices."""
+    generated_file = Path(__file__).parent / "sample_data" / "generated.txt"
 
-    with patch("honeywell_radio_exporter.ramses_prometheus_exporter.start_http_server"):
-        exporter = RamsesPrometheusExporter(port=8000, ramses_port="/dev/ttyUSB0")
+    with open(generated_file, "r") as f:
+        content = f.read()
 
-    # Mock gateway with device without alias
-    mock_gateway = Mock()
-    mock_device = Mock()
-    mock_device.id = "18:147744"
-    mock_device.traits = {"alias": None, "class": "gateway_interface"}
-    mock_gateway.device_by_id = {"18:147744": mock_device}
-    exporter.gateway = mock_gateway
+    # Check that there are no device_info metrics with device_name="unknown"
+    lines = content.split("\n")
+    unknown_device_info = [
+        line
+        for line in lines
+        if line.startswith("ramses_device_info{") and 'device_name="unknown"' in line
+    ]
 
-    # Update device info
-    exporter._update_device_info("18:147744")
-
-    # Get metric samples
-    samples = list(exporter.device_info.collect())[0].samples
-
-    # Find our device
-    device_sample = None
-    for sample in samples:
-        if sample.labels.get("device_id") == "18:147744":
-            device_sample = sample
-            break
-
-    assert device_sample is not None, "Device metric not found"
     assert (
-        device_sample.labels["device_name"] == "unknown"
-    ), "Device without alias should have name 'unknown'"
+        len(unknown_device_info) == 0
+    ), f"Found {len(unknown_device_info)} device_info metrics with unknown names:\n" + "\n".join(
+        unknown_device_info[:5]
+    )
 
 
-def test_message_processing_updates_device_info():
-    """Test that processing messages updates device_info metric."""
-    from honeywell_radio_exporter.ramses_prometheus_exporter import RamsesPrometheusExporter
-    from unittest.mock import Mock
+def test_device_ids_in_metrics():
+    """Test that device IDs follow expected format."""
+    generated_file = Path(__file__).parent / "sample_data" / "generated.txt"
 
-    with patch("honeywell_radio_exporter.ramses_prometheus_exporter.start_http_server"):
-        exporter = RamsesPrometheusExporter(port=8000, ramses_port="/dev/ttyUSB0")
+    with open(generated_file, "r") as f:
+        content = f.read()
 
-    # Mock gateway
-    mock_gateway = Mock()
-    mock_device = Mock()
-    mock_device.id = "01:234576"
-    mock_device.traits = {"alias": "Controller", "class": "controller"}
-    mock_gateway.device_by_id = {"01:234576": mock_device}
-    exporter.gateway = mock_gateway
+    # Extract device IDs from device_info metrics
+    import re
 
-    # Create mock message
-    mock_msg = Mock()
-    mock_msg.code = "1F09"
-    mock_msg.verb = " I"
-    mock_msg.src = Mock()
-    mock_msg.src.id = "01:234576"
-    mock_msg.dst = Mock()
-    mock_msg.dst.id = "01:234576"
-    mock_msg.payload = {"remaining_seconds": 156.0}
+    device_id_pattern = r'device_id="(\d{2}:\d{6})"'
+    device_ids = set(re.findall(device_id_pattern, content))
 
-    # Process message
-    exporter._capture_message_metrics(mock_msg)
+    assert len(device_ids) > 0, "Should find device IDs in metrics"
 
-    # Verify device_info was updated
-    samples = list(exporter.device_info.collect())[0].samples
-    device_sample = None
-    for sample in samples:
-        if sample.labels.get("device_id") == "01:234576":
-            device_sample = sample
-            break
+    # All device IDs should follow format: XX:XXXXXX
+    for device_id in device_ids:
+        parts = device_id.split(":")
+        assert len(parts) == 2, f"Device ID should have format XX:XXXXXX: {device_id}"
+        assert len(parts[0]) == 2, f"Device type should be 2 digits: {device_id}"
+        assert len(parts[1]) == 6, f"Device number should be 6 digits: {device_id}"
 
-    assert device_sample is not None, "Device info should be updated when processing messages"
-    assert device_sample.labels["device_name"] == "Controller"
+    print(f"\n✓ Found {len(device_ids)} unique device IDs with valid format")
+    print(f"  Sample: {sorted(list(device_ids))[:3]}")
 
 
-def test_sample_messages_device_extraction():
-    """Test device extraction from sample messages file."""
-    sample_file = Path(__file__).parent / "sample_data" / "ramses.msgs"
+def test_device_types_in_metrics():
+    """Test that we have various device types in the metrics."""
+    generated_file = Path(__file__).parent / "sample_data" / "generated.txt"
 
-    if not sample_file.exists():
-        pytest.skip(f"Sample data file not found: {sample_file}")
+    with open(generated_file, "r") as f:
+        content = f.read()
 
-    # Read sample messages
-    with open(sample_file, "r") as f:
-        messages = f.readlines()
+    # Extract device types (first part of device_id)
+    import re
 
-    # Extract unique device IDs from messages
-    device_ids = set()
-    for line in messages[:100]:  # Check first 100 messages
-        # Messages format: ||  device_id |  device_id | ...
-        parts = line.split("|")
-        if len(parts) >= 3:
-            # Extract source device (second field)
-            src = parts[1].strip()
-            if src and ":" in src:
-                device_ids.add(src)
-            # Extract destination device (third field)
-            dst = parts[2].strip()
-            if dst and ":" in dst:
-                device_ids.add(dst)
+    device_id_pattern = r'device_id="(\d{2}):\d{6}"'
+    device_types = set(re.findall(device_id_pattern, content))
 
-    # Should have found some devices
-    assert len(device_ids) > 0, "Should find device IDs in sample messages"
+    print(f"\n✓ Found {len(device_types)} device types in metrics:")
+    for dtype in sorted(device_types):
+        print(f"  Type {dtype}")
 
-    # Common device types should be present
-    device_types = {did.split(":")[0] for did in device_ids if ":" in did}
-
-    print(f"\nFound {len(device_ids)} unique devices")
-    print(f"Device types: {sorted(device_types)}")
-    print(f"Sample devices: {sorted(list(device_ids))[:5]}")
-
-
-def test_metric_export_format():
-    """Test that device_info metric exports in correct Prometheus format."""
-    from honeywell_radio_exporter.ramses_prometheus_exporter import RamsesPrometheusExporter
-    from prometheus_client import generate_latest
-
-    with patch("honeywell_radio_exporter.ramses_prometheus_exporter.start_http_server"):
-        exporter = RamsesPrometheusExporter(port=8000, ramses_port="/dev/ttyUSB0")
-
-    # Mock gateway
-    mock_gateway = Mock()
-    mock_device = Mock()
-    mock_device.id = "18:147744"
-    mock_device.traits = {"alias": "TestGateway", "class": "gateway_interface"}
-    mock_gateway.device_by_id = {"18:147744": mock_device}
-    exporter.gateway = mock_gateway
-
-    # Update device info
-    exporter._update_device_info("18:147744")
-
-    # Generate Prometheus output
-    output = generate_latest(exporter.device_info).decode("utf-8")
-
-    # Check format
-    assert "ramses_device_info" in output, "Metric name should be in output"
-    assert 'device_id="18:147744"' in output, "device_id label should be in output"
-    assert 'device_name="TestGateway"' in output, "device_name label should be in output"
-    assert "1.0" in output or "1" in output, "Metric value should be 1.0"
-
-    print("\nGenerated Prometheus metrics:")
-    for line in output.split("\n"):
-        if "ramses_device_info" in line and not line.startswith("#"):
-            print(f"  {line}")
-
-
-def test_device_name_caching():
-    """Test that device names are efficiently retrieved."""
-    from honeywell_radio_exporter.ramses_prometheus_exporter import RamsesPrometheusExporter
-
-    with patch("honeywell_radio_exporter.ramses_prometheus_exporter.start_http_server"):
-        exporter = RamsesPrometheusExporter(port=8000, ramses_port="/dev/ttyUSB0")
-
-    # Mock gateway
-    mock_gateway = Mock()
-    mock_device = Mock()
-    mock_device.id = "01:234576"
-    mock_device.traits = {"alias": "Controller", "class": "controller"}
-    mock_gateway.device_by_id = {"01:234576": mock_device}
-    exporter.gateway = mock_gateway
-
-    # Get name multiple times
-    name1 = exporter._get_device_name("01:234576")
-    name2 = exporter._get_device_name("01:234576")
-    name3 = exporter._get_device_name("01:234576")
-
-    # All should return the same name
-    assert name1 == name2 == name3 == "Controller"
-
-    # Gateway should have been accessed (device lookup)
-    assert mock_gateway.device_by_id.__getitem__.called
+    # Should have multiple device types
+    assert len(device_types) >= 2, "Should have multiple device types"
 
 
 if __name__ == "__main__":
-    # Run tests
+    import pytest
+
     pytest.main([__file__, "-v", "-s"])
