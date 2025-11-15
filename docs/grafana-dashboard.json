@@ -97,7 +97,21 @@
           "w": 12,
           "x": 0,
           "y": 8
-        }
+        },
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {
+              "excludeByName": {
+                "Time": true,
+                "job": true,
+                "instance": true,
+                "monitor": true,
+                "origin_prometheus": true
+              }
+            }
+          }
+        ]
       },
       {
         "id": 5,
@@ -352,7 +366,11 @@
             "id": "organize",
             "options": {
               "excludeByName": {
-                "Time": true
+                "Time": true,
+                "job": true,
+                "instance": true,
+                "monitor": true,
+                "origin_prometheus": true
               },
               "indexByName": {
                 "boiler_id": 0,
@@ -506,7 +524,11 @@
             "id": "organize",
             "options": {
               "excludeByName": {
-                "Time": true
+                "Time": true,
+                "job": true,
+                "instance": true,
+                "monitor": true,
+                "origin_prometheus": true
               },
               "indexByName": {
                 "device_id": 0,
@@ -570,7 +592,11 @@
                 "Time": true,
                 "Value": true,
                 "device_id": true,
-                "zone_idx": true
+                "zone_idx": true,
+                "job": true,
+                "instance": true,
+                "monitor": true,
+                "origin_prometheus": true
               },
               "indexByName": {
                 "zone_name": 0,
