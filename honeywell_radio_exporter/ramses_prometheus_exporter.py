@@ -448,11 +448,21 @@ class RamsesPrometheusExporter:
         return str(code)
 
     def _update_device_info(self, device_id: str):
-        """Update device info metric with device ID and name mapping."""
+        """Update device info metric with device ID and name mapping.
+
+        Only creates/updates the metric if we have a real device name (not 'unknown').
+        This prevents cluttering metrics with unknown devices.
+        """
         if not device_id or device_id == "unknown":
             return
 
         device_name = self._get_device_name(device_id)
+
+        # Only set the metric if we have a real device name (not 'unknown')
+        # This prevents creating metrics for devices before their names are discovered
+        if device_name == "unknown":
+            return
+
         # Set the device info metric to 1 (it's always 1, used for joining)
         self.device_info.labels(device_id=device_id, device_name=device_name).set(1)
 
