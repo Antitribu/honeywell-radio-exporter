@@ -874,7 +874,10 @@
           "rightSide": false,
           "total": false,
           "values": true
-        }
+        },
+        "lines": true,
+        "points": false,
+        "linewidth": 2
       }
     ],
     "time": {
