@@ -104,34 +104,37 @@ def test_sample_data_metrics_generation():
         with open(input_file, "r") as f:
             for line_num, line in enumerate(f, 1):
                 line = line.strip()
-                if not line:
+                if not line or not line.startswith("||"):
                     continue
 
                 try:
                     # Parse the message line
-                    # Format: timestamp verb device1 device2 device3 code len payload
-                    # Example: 2024-01-15 10:30:45.123 045  I --- 01:145038 --:------ 01:145038 1F09 003 FF04B5
+                    # Format: ||  device1 |  device2 |  verb | message_type | context || payload_dict
+                    # Example: ||  01:234576 |  18:147744 | RP | zone_mode | 08 || {'zone_idx': '08', 'mode': 'follow_schedule'}
 
-                    parts = line.split()
-                    if len(parts) < 9:
+                    # Split on || to separate header from payload
+                    parts = line.split("||")
+                    if len(parts) < 3:
                         continue
 
-                    # Extract components
-                    # parts[0-1] = timestamp (date and time)
-                    # parts[2] = seq number (ignored)
-                    # parts[3] = verb (I, RQ, RP, W)
-                    # parts[4] = device1 (source? or dest?)
-                    # parts[5] = device2
-                    # parts[6] = device3
-                    # parts[7] = code
-                    # parts[8] = length
-                    # parts[9:] = payload
+                    # Parse header: device1 | device2 | verb | message_type | context
+                    header = parts[1].strip()
+                    header_parts = [p.strip() for p in header.split("|")]
+                    if len(header_parts) < 4:
+                        continue
 
-                    verb = parts[3]
-                    src_id = parts[5]
-                    dst_id = parts[4]  # Often --:------
-                    code = parts[7]
-                    payload_str = " ".join(parts[9:]) if len(parts) > 9 else ""
+                    device1 = header_parts[0]
+                    device2 = header_parts[1] if len(header_parts) > 1 else ""
+                    verb = header_parts[2] if len(header_parts) > 2 else ""
+                    message_type = header_parts[3] if len(header_parts) > 3 else ""
+
+                    # Parse payload (Python dict as string)
+                    payload_str = parts[2].strip()
+
+                    # Use actual devices and verb from parsed data
+                    src_id = device1 if device1 else "unknown"
+                    dst_id = device2 if device2 else "unknown"
+                    code = message_type
 
                     # Create a mock message object
                     mock_msg = MagicMock()
@@ -144,115 +147,17 @@ def test_sample_data_metrics_generation():
                     mock_msg.dst = MagicMock()
                     mock_msg.dst.id = dst_id
 
-                    # Try to parse payload into a dict based on known patterns
-                    mock_msg.payload = {}
-
-                    # For temperature messages (30C9), payload might contain temperature
-                    if code == "30C9" and payload_str:
-                        # Format: zone_idx + temperature (hex)
+                    # Parse payload - it's already a Python dict as a string!
+                    if payload_str:
                         try:
-                            zone_idx = payload_str[:2]
-                            temp_hex = payload_str[2:6]
-                            if temp_hex and temp_hex != "7FFF":
-                                temp = int(temp_hex, 16)
-                                if temp > 32768:
-                                    temp = temp - 65536
-                                temp = temp / 100.0
-                                mock_msg.payload = {"zone_idx": zone_idx, "temperature": temp}
-                        except (ValueError, IndexError):
-                            pass
+                            import ast
 
-                    # For setpoint messages (2309, 2349)
-                    elif code in ["2309", "2349"] and payload_str:
-                        try:
-                            zone_idx = payload_str[:2]
-                            setpoint_hex = payload_str[2:6]
-                            if setpoint_hex and setpoint_hex != "7FFF":
-                                setpoint = int(setpoint_hex, 16) / 100.0
-                                mock_msg.payload = {"zone_idx": zone_idx, "setpoint": setpoint}
-
-                                # For 2349, might also have mode
-                                if code == "2349" and len(payload_str) > 6:
-                                    mode_hex = payload_str[6:8]
-                                    mode_map = {
-                                        "00": "follow_schedule",
-                                        "01": "advanced_override",
-                                        "02": "permanent_override",
-                                        "03": "countdown_override",
-                                        "04": "temporary_override",
-                                    }
-                                    mode = mode_map.get(mode_hex, mode_hex)
-                                    mock_msg.payload["mode"] = mode
-                        except (ValueError, IndexError):
-                            pass
-
-                    # For heat demand (3150)
-                    elif code == "3150" and payload_str:
-                        try:
-                            zone_idx = payload_str[:2]
-                            demand_hex = payload_str[2:4]
-                            if demand_hex:
-                                demand = int(demand_hex, 16) / 200.0  # 0-200 = 0-100%
-                                mock_msg.payload = {"zone_idx": zone_idx, "heat_demand": demand}
-                        except (ValueError, IndexError):
-                            pass
-
-                    # For window state (12B0)
-                    elif code == "12B0" and payload_str:
-                        try:
-                            zone_idx = payload_str[:2]
-                            window_hex = payload_str[2:6]
-                            if window_hex:
-                                window_open = window_hex == "C800" or window_hex == "0001"
-                                mock_msg.payload = {
-                                    "zone_idx": zone_idx,
-                                    "window_open": window_open,
-                                }
-                        except (ValueError, IndexError):
-                            pass
-
-                    # For system sync (1F09)
-                    elif code == "1F09" and payload_str:
-                        try:
-                            # Format: status + remaining seconds (hex)
-                            if len(payload_str) >= 6:
-                                remaining_hex = payload_str[2:6]
-                                remaining = int(remaining_hex, 16)
-                                mock_msg.payload = {"remaining_seconds": remaining}
-                        except (ValueError, IndexError):
-                            pass
-
-                    # For boiler messages (3EF0, 3EF1, 22D9)
-                    elif code in ["3EF0", "3EF1"] and payload_str:
-                        try:
-                            # OpenTherm boiler status
-                            if len(payload_str) >= 12:
-                                # Modulation level
-                                mod_hex = payload_str[2:4]
-                                modulation = int(mod_hex, 16) / 100.0
-
-                                # Status flags (varies by message)
-                                mock_msg.payload = {"modulation_level": modulation}
-
-                                # Try to parse flame/CH/DHW status from flags
-                                if len(payload_str) >= 4:
-                                    status_hex = payload_str[:2]
-                                    status = int(status_hex, 16)
-                                    mock_msg.payload["flame_on"] = bool(status & 0x08)
-                                    mock_msg.payload["ch_active"] = bool(status & 0x02)
-                                    mock_msg.payload["dhw_active"] = bool(status & 0x04)
-                        except (ValueError, IndexError):
-                            pass
-
-                    elif code == "22D9" and payload_str:
-                        try:
-                            # Boiler setpoint
-                            if len(payload_str) >= 4:
-                                setpoint_hex = payload_str[:4]
-                                setpoint = int(setpoint_hex, 16) / 100.0
-                                mock_msg.payload = {"setpoint": setpoint}
-                        except (ValueError, IndexError):
-                            pass
+                            mock_msg.payload = ast.literal_eval(payload_str)
+                        except (ValueError, SyntaxError):
+                            # If it fails to parse, use empty dict
+                            mock_msg.payload = {}
+                    else:
+                        mock_msg.payload = {}
 
                     # Process the message through the exporter
                     exporter._capture_message_metrics(mock_msg)
