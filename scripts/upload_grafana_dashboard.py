@@ -104,6 +104,116 @@ class GrafanaDashboardUploader:
             print(f"⚠️  Could not fetch datasources: {e}")
             return []
 
+    def search_dashboards(self, query: str = "") -> list:
+        """
+        Search for dashboards.
+
+        Args:
+            query: Search query (searches title and tags)
+
+        Returns:
+            List of matching dashboards
+        """
+        try:
+            params = {"query": query, "type": "dash-db"}
+            response = requests.get(
+                f"{self.grafana_url}/api/search",
+                headers=self.headers,
+                auth=self.auth,
+                params=params,
+                timeout=10,
+            )
+            response.raise_for_status()
+
+            content_type = response.headers.get("Content-Type", "")
+            if "application/json" not in content_type:
+                print(f"⚠️  Unexpected content type: {content_type}")
+                return []
+
+            return response.json()
+        except json.JSONDecodeError as e:
+            print(f"⚠️  Could not parse search response as JSON: {e}")
+            return []
+        except requests.exceptions.RequestException as e:
+            print(f"⚠️  Could not search dashboards: {e}")
+            return []
+
+    def delete_dashboard(self, uid: str) -> bool:
+        """
+        Delete a dashboard by UID.
+
+        Args:
+            uid: Dashboard UID
+
+        Returns:
+            True if successful, False otherwise
+        """
+        try:
+            response = requests.delete(
+                f"{self.grafana_url}/api/dashboards/uid/{uid}",
+                headers=self.headers,
+                auth=self.auth,
+                timeout=10,
+            )
+
+            if response.status_code == 200:
+                return True
+            elif response.status_code == 404:
+                print(f"⚠️  Dashboard {uid} not found (already deleted?)")
+                return False
+            else:
+                print(f"⚠️  Failed to delete dashboard {uid}: {response.status_code}")
+                print(f"   Response: {response.text[:200]}")
+                return False
+
+        except requests.exceptions.RequestException as e:
+            print(f"⚠️  Error deleting dashboard {uid}: {e}")
+            return False
+
+    def delete_dashboards_by_title(self, title: str) -> int:
+        """
+        Delete all dashboards with a specific title.
+
+        Args:
+            title: Dashboard title to search for
+
+        Returns:
+            Number of dashboards deleted
+        """
+        print(f"\n🔍 Searching for existing dashboards with title: {title}")
+
+        # Search for dashboards
+        dashboards = self.search_dashboards(query=title)
+
+        if not dashboards:
+            print("   No existing dashboards found")
+            return 0
+
+        # Filter to exact title matches
+        matching = [d for d in dashboards if d.get("title") == title]
+
+        if not matching:
+            print(f"   No dashboards found with exact title match")
+            return 0
+
+        print(f"   Found {len(matching)} dashboard(s) with matching title:")
+        for dash in matching:
+            print(f"   - {dash.get('title')} (UID: {dash.get('uid')}, ID: {dash.get('id')})")
+
+        # Delete each matching dashboard
+        deleted_count = 0
+        for dash in matching:
+            uid = dash.get("uid")
+            if uid:
+                print(f"   🗑️  Deleting dashboard: {dash.get('title')} (UID: {uid})")
+                if self.delete_dashboard(uid):
+                    print(f"      ✅ Deleted successfully")
+                    deleted_count += 1
+                else:
+                    print(f"      ❌ Failed to delete")
+
+        return deleted_count
+
     def upload_dashboard(
         self, dashboard_path: Path, datasource_uid: str = None, folder_id: int = 0
     ) -> bool:
@@ -321,6 +431,12 @@ Grafana API Key Creation:
 
     parser.add_argument("--debug", action="store_true", help="Enable debug output")
 
+    parser.add_argument(
+        "--no-delete",
+        action="store_true",
+        help="Don't delete existing dashboards with the same name",
+    )
+
     args = parser.parse_args()
 
     # Validate authentication
@@ -385,6 +501,20 @@ Grafana API Key Creation:
                 print("   Dashboard will be uploaded without datasource configuration")
         else:
             print("⚠️  Could not fetch datasources")
+
+    # Delete existing dashboards with the same title (unless --no-delete specified)
+    if not args.no_delete:
+        # Read dashboard to get title
+        try:
+            with open(args.dashboard, "r") as f:
+                dashboard_data = json.load(f)
+            dashboard_title = dashboard_data.get("dashboard", {}).get("title")
+            if dashboard_title:
+                deleted_count = uploader.delete_dashboards_by_title(dashboard_title)
+                if deleted_count > 0:
+                    print(f"\n✅ Deleted {deleted_count} existing dashboard(s)")
+        except Exception as e:
+            print(f"\n⚠️  Could not delete existing dashboards: {e}")
 
     # Upload dashboard
     print("\n📤 Uploading dashboard...")
