@@ -104,97 +104,97 @@ ramses_messages_total{code="window_state",destination_device="01:234576",message
 ramses_messages_total{code="setpoint",destination_device="01:234576",message_type="setpoint",source_device="04:122846",verb="I"} 1.0
 # HELP ramses_messages_created Total number of RAMSES messages received
 # TYPE ramses_messages_created gauge
-ramses_messages_created{code="puzzle_packet",destination_device="63:262142",message_type="puzzle_packet",source_device="18:147744",verb="I"} 1.7632469299365819e+09
-ramses_messages_created{code="temperature",destination_device="unknown",message_type="temperature",source_device="04:122498",verb="I"} 1.7632469299548256e+09
-ramses_messages_created{code="system_sync",destination_device="unknown",message_type="system_sync",source_device="01:234576",verb="I"} 1.763246929955875e+09
-ramses_messages_created{code="setpoint",destination_device="unknown",message_type="setpoint",source_device="01:234576",verb="I"} 1.7632469299571817e+09
-ramses_messages_created{code="temperature",destination_device="unknown",message_type="temperature",source_device="01:234576",verb="I"} 1.763246929959691e+09
-ramses_messages_created{code="zone_devices",destination_device="01:234576",message_type="zone_devices",source_device="18:147744",verb="RQ"} 1.7632469299606264e+09
-ramses_messages_created{code="zone_devices",destination_device="18:147744",message_type="zone_devices",source_device="01:234576",verb="RP"} 1.763246929962831e+09
-ramses_messages_created{code="temperature",destination_device="01:234576",message_type="temperature",source_device="18:147744",verb="RQ"} 1.763246929963925e+09
-ramses_messages_created{code="temperature",destination_device="18:147744",message_type="temperature",source_device="01:234576",verb="RP"} 1.7632469299649196e+09
-ramses_messages_created{code="relay_demand",destination_device="13:243590",message_type="relay_demand",source_device="18:147744",verb="RQ"} 1.7632469300005062e+09
-ramses_messages_created{code="relay_demand",destination_device="13:004003",message_type="relay_demand",source_device="18:147744",verb="RQ"} 1.7632469300091383e+09
-ramses_messages_created{code="tpi_params",destination_device="13:243590",message_type="tpi_params",source_device="18:147744",verb="RQ"} 1.7632469300106883e+09
-ramses_messages_created{code="datetime",destination_device="01:234576",message_type="datetime",source_device="18:147744",verb="RQ"} 1.763246930011689e+09
-ramses_messages_created{code="datetime",destination_device="18:147744",message_type="datetime",source_device="01:234576",verb="RP"} 1.7632469300128126e+09
-ramses_messages_created{code="dhw_params",destination_device="01:234576",message_type="dhw_params",source_device="18:147744",verb="RQ"} 1.763246930016365e+09
-ramses_messages_created{code="dhw_params",destination_device="18:147744",message_type="dhw_params",source_device="01:234576",verb="RP"} 1.7632469300174441e+09
-ramses_messages_created{code="tpi_params",destination_device="13:004003",message_type="tpi_params",source_device="18:147744",verb="RQ"} 1.7632469300236402e+09
-ramses_messages_created{code="actuator_cycle",destination_device="13:243590",message_type="actuator_cycle",source_device="18:147744",verb="RQ"} 1.7632469300453622e+09
-ramses_messages_created{code="setpoint",destination_device="01:234576",message_type="setpoint",source_device="04:122502",verb="I"} 1.763246930050624e+09
-ramses_messages_created{code="system_zones",destination_device="01:234576",message_type="system_zones",source_device="18:147744",verb="RQ"} 1.7632469300527663e+09
-ramses_messages_created{code="system_zones",destination_device="18:147744",message_type="system_zones",source_device="01:234576",verb="RP"} 1.7632469300551252e+09
-ramses_messages_created{code="dhw_mode",destination_device="01:234576",message_type="dhw_mode",source_device="18:147744",verb="RQ"} 1.7632469300596802e+09
-ramses_messages_created{code="dhw_mode",destination_device="18:147744",message_type="dhw_mode",source_device="01:234576",verb="RP"} 1.763246930060678e+09
-ramses_messages_created{code="actuator_cycle",destination_device="13:004003",message_type="actuator_cycle",source_device="18:147744",verb="RQ"} 1.7632469300711114e+09
-ramses_messages_created{code="dhw_temp",destination_device="01:234576",message_type="dhw_temp",source_device="18:147744",verb="RQ"} 1.7632469301560833e+09
-ramses_messages_created{code="dhw_temp",destination_device="18:147744",message_type="dhw_temp",source_device="01:234576",verb="RP"} 1.7632469301571965e+09
-ramses_messages_created{code="system_mode",destination_device="01:234576",message_type="system_mode",source_device="18:147744",verb="RQ"} 1.7632469302023141e+09
-ramses_messages_created{code="system_mode",destination_device="18:147744",message_type="system_mode",source_device="01:234576",verb="RP"} 1.7632469302032695e+09
-ramses_messages_created{code="schedule_version",destination_device="01:234576",message_type="schedule_version",source_device="18:147744",verb="RQ"} 1.7632469302043014e+09
-ramses_messages_created{code="schedule_version",destination_device="18:147744",message_type="schedule_version",source_device="01:234576",verb="RP"} 1.7632469302053325e+09
-ramses_messages_created{code="tpi_params",destination_device="01:234576",message_type="tpi_params",source_device="18:147744",verb="RQ"} 1.7632469302079859e+09
-ramses_messages_created{code="tpi_params",destination_device="18:147744",message_type="tpi_params",source_device="01:234576",verb="RP"} 1.7632469302090049e+09
-ramses_messages_created{code="system_fault",destination_device="01:234576",message_type="system_fault",source_device="18:147744",verb="RQ"} 1.763246930210605e+09
-ramses_messages_created{code="system_fault",destination_device="18:147744",message_type="system_fault",source_device="01:234576",verb="RP"} 1.7632469302126245e+09
-ramses_messages_created{code="zone_mode",destination_device="01:234576",message_type="zone_mode",source_device="18:147744",verb="RQ"} 1.7632469302396514e+09
-ramses_messages_created{code="zone_mode",destination_device="18:147744",message_type="zone_mode",source_device="01:234576",verb="RP"} 1.7632469302407784e+09
-ramses_messages_created{code="zone_name",destination_device="01:234576",message_type="zone_name",source_device="18:147744",verb="RQ"} 1.7632469302522273e+09
-ramses_messages_created{code="zone_name",destination_device="18:147744",message_type="zone_name",source_device="01:234576",verb="RP"} 1.763246930253281e+09
-ramses_messages_created{code="zone_params",destination_device="01:234576",message_type="zone_params",source_device="18:147744",verb="RQ"} 1.7632469302680283e+09
-ramses_messages_created{code="zone_params",destination_device="18:147744",message_type="zone_params",source_device="01:234576",verb="RP"} 1.7632469302690568e+09
-ramses_messages_created{code="heat_demand",destination_device="01:234576",message_type="heat_demand",source_device="04:122498",verb="I"} 1.7632469303965528e+09
-ramses_messages_created{code="relay_demand",destination_device="unknown",message_type="relay_demand",source_device="01:234576",verb="I"} 1.763246930400527e+09
-ramses_messages_created{code="heat_demand",destination_device="unknown",message_type="heat_demand",source_device="01:234576",verb="I"} 1.7632469304031765e+09
-ramses_messages_created{code="heat_demand",destination_device="01:234576",message_type="heat_demand",source_device="04:122294",verb="I"} 1.7632469304595444e+09
-ramses_messages_created{code="window_state",destination_device="01:234576",message_type="window_state",source_device="04:122504",verb="I"} 1.7632469304643743e+09
-ramses_messages_created{code="setpoint",destination_device="01:234576",message_type="setpoint",source_device="04:122504",verb="I"} 1.7632469304692879e+09
-ramses_messages_created{code="actuator_state",destination_device="13:243590",message_type="actuator_state",source_device="01:234576",verb="RQ"} 1.7632469304728494e+09
-ramses_messages_created{code="actuator_sync",destination_device="unknown",message_type="actuator_sync",source_device="01:234576",verb="I"} 1.7632469304800134e+09
-ramses_messages_created{code="zone_mode",destination_device="unknown",message_type="zone_mode",source_device="01:234576",verb="I"} 1.76324693048107e+09
-ramses_messages_created{code="heat_demand",destination_device="01:234576",message_type="heat_demand",source_device="04:122504",verb="I"} 1.76324693048476e+09
-ramses_messages_created{code="window_state",destination_device="01:234576",message_type="window_state",source_device="18:147744",verb="RQ"} 1.7632469304864206e+09
-ramses_messages_created{code="window_state",destination_device="18:147744",message_type="window_state",source_device="01:234576",verb="RP"} 1.763246930487439e+09
-ramses_messages_created{code="temperature",destination_device="unknown",message_type="temperature",source_device="04:122500",verb="I"} 1.7632469305106535e+09
-ramses_messages_created{code="window_state",destination_device="01:234576",message_type="window_state",source_device="04:122820",verb="I"} 1.7632469305207856e+09
-ramses_messages_created{code="setpoint",destination_device="01:234576",message_type="setpoint",source_device="04:122820",verb="I"} 1.7632469305270212e+09
-ramses_messages_created{code="temperature",destination_device="unknown",message_type="temperature",source_device="04:122296",verb="I"} 1.7632469305281167e+09
-ramses_messages_created{code="setpoint",destination_device="01:234576",message_type="setpoint",source_device="04:122766",verb="I"} 1.7632469305291467e+09
-ramses_messages_created{code="window_state",destination_device="01:234576",message_type="window_state",source_device="04:122766",verb="I"} 1.7632469305316272e+09
-ramses_messages_created{code="temperature",destination_device="unknown",message_type="temperature",source_device="04:122292",verb="I"} 1.7632469305432084e+09
-ramses_messages_created{code="window_state",destination_device="01:234576",message_type="window_state",source_device="04:122294",verb="I"} 1.7632469305452335e+09
-ramses_messages_created{code="window_state",destination_device="01:234576",message_type="window_state",source_device="04:122296",verb="I"} 1.7632469308991883e+09
-ramses_messages_created{code="temperature",destination_device="unknown",message_type="temperature",source_device="04:122840",verb="I"} 1.7632469310313423e+09
-ramses_messages_created{code="window_state",destination_device="01:234576",message_type="window_state",source_device="04:122840",verb="I"} 1.7632469310324442e+09
-ramses_messages_created{code="setpoint",destination_device="01:234576",message_type="setpoint",source_device="04:122840",verb="I"} 1.76324693104058e+09
-ramses_messages_created{code="setpoint",destination_device="01:234576",message_type="setpoint",source_device="04:122294",verb="I"} 1.7632469310452125e+09
-ramses_messages_created{code="heat_demand",destination_device="01:234576",message_type="heat_demand",source_device="04:122296",verb="I"} 1.7632469310488188e+09
-ramses_messages_created{code="heat_demand",destination_device="01:234576",message_type="heat_demand",source_device="04:122820",verb="I"} 1.7632469310533397e+09
-ramses_messages_created{code="heat_demand",destination_device="01:234576",message_type="heat_demand",source_device="04:122840",verb="I"} 1.7632469310549755e+09
-ramses_messages_created{code="heat_demand",destination_device="01:234576",message_type="heat_demand",source_device="04:122292",verb="I"} 1.7632469310560048e+09
-ramses_messages_created{code="heat_demand",destination_device="01:234576",message_type="heat_demand",source_device="04:122766",verb="I"} 1.763246931057054e+09
-ramses_messages_created{code="temperature",destination_device="unknown",message_type="temperature",source_device="04:122820",verb="I"} 1.7632469314553216e+09
-ramses_messages_created{code="heat_demand",destination_device="01:234576",message_type="heat_demand",source_device="04:122500",verb="I"} 1.7632469314596007e+09
-ramses_messages_created{code="heat_demand",destination_device="01:234576",message_type="heat_demand",source_device="04:122846",verb="I"} 1.763246931538714e+09
-ramses_messages_created{code="window_state",destination_device="01:234576",message_type="window_state",source_device="04:122498",verb="I"} 1.7632469316567833e+09
-ramses_messages_created{code="window_state",destination_device="01:234576",message_type="window_state",source_device="04:122502",verb="I"} 1.763246932164364e+09
-ramses_messages_created{code="temperature",destination_device="unknown",message_type="temperature",source_device="04:122504",verb="I"} 1.7632469325637133e+09
-ramses_messages_created{code="setpoint",destination_device="01:234576",message_type="setpoint",source_device="04:122498",verb="I"} 1.7632469327954166e+09
-ramses_messages_created{code="temperature",destination_device="unknown",message_type="temperature",source_device="04:122846",verb="I"} 1.7632469328014488e+09
-ramses_messages_created{code="temperature",destination_device="unknown",message_type="temperature",source_device="04:122290",verb="I"} 1.7632469337675428e+09
-ramses_messages_created{code="zone_params",destination_device="unknown",message_type="zone_params",source_device="01:234576",verb="I"} 1.763246933890635e+09
-ramses_messages_created{code="setpoint",destination_device="01:234576",message_type="setpoint",source_device="04:122296",verb="I"} 1.7632469346132452e+09
-ramses_messages_created{code="heat_demand",destination_device="01:234576",message_type="heat_demand",source_device="04:122290",verb="I"} 1.763246935266637e+09
-ramses_messages_created{code="temperature",destination_device="unknown",message_type="temperature",source_device="04:122294",verb="I"} 1.7632469352676933e+09
-ramses_messages_created{code="window_state",destination_device="01:234576",message_type="window_state",source_device="04:122500",verb="I"} 1.763246935280757e+09
-ramses_messages_created{code="temperature",destination_device="unknown",message_type="temperature",source_device="04:122766",verb="I"} 1.7632469353531106e+09
-ramses_messages_created{code="setpoint",destination_device="01:234576",message_type="setpoint",source_device="04:122500",verb="I"} 1.7632469368515277e+09
-ramses_messages_created{code="window_state",destination_device="01:234576",message_type="window_state",source_device="04:122292",verb="I"} 1.7632469368526363e+09
-ramses_messages_created{code="setpoint",destination_device="01:234576",message_type="setpoint",source_device="04:122292",verb="I"} 1.763246936858935e+09
-ramses_messages_created{code="temperature",destination_device="unknown",message_type="temperature",source_device="04:122502",verb="I"} 1.7632469368650203e+09
-ramses_messages_created{code="window_state",destination_device="01:234576",message_type="window_state",source_device="04:122846",verb="I"} 1.7632469368714821e+09
-ramses_messages_created{code="setpoint",destination_device="01:234576",message_type="setpoint",source_device="04:122846",verb="I"} 1.7632469370351045e+09
+ramses_messages_created{code="puzzle_packet",destination_device="63:262142",message_type="puzzle_packet",source_device="18:147744",verb="I"} 1.7632470989734318e+09
+ramses_messages_created{code="temperature",destination_device="unknown",message_type="temperature",source_device="04:122498",verb="I"} 1.7632470989903574e+09
+ramses_messages_created{code="system_sync",destination_device="unknown",message_type="system_sync",source_device="01:234576",verb="I"} 1.7632470989914296e+09
+ramses_messages_created{code="setpoint",destination_device="unknown",message_type="setpoint",source_device="01:234576",verb="I"} 1.763247098992627e+09
+ramses_messages_created{code="temperature",destination_device="unknown",message_type="temperature",source_device="01:234576",verb="I"} 1.7632470989953163e+09
+ramses_messages_created{code="zone_devices",destination_device="01:234576",message_type="zone_devices",source_device="18:147744",verb="RQ"} 1.7632470989971907e+09
+ramses_messages_created{code="zone_devices",destination_device="18:147744",message_type="zone_devices",source_device="01:234576",verb="RP"} 1.7632470989987385e+09
+ramses_messages_created{code="temperature",destination_device="01:234576",message_type="temperature",source_device="18:147744",verb="RQ"} 1.7632470989997315e+09
+ramses_messages_created{code="temperature",destination_device="18:147744",message_type="temperature",source_device="01:234576",verb="RP"} 1.7632470990007422e+09
+ramses_messages_created{code="relay_demand",destination_device="13:243590",message_type="relay_demand",source_device="18:147744",verb="RQ"} 1.7632470990315967e+09
+ramses_messages_created{code="relay_demand",destination_device="13:004003",message_type="relay_demand",source_device="18:147744",verb="RQ"} 1.7632470990384185e+09
+ramses_messages_created{code="tpi_params",destination_device="13:243590",message_type="tpi_params",source_device="18:147744",verb="RQ"} 1.7632470990394711e+09
+ramses_messages_created{code="datetime",destination_device="01:234576",message_type="datetime",source_device="18:147744",verb="RQ"} 1.763247099041337e+09
+ramses_messages_created{code="datetime",destination_device="18:147744",message_type="datetime",source_device="01:234576",verb="RP"} 1.7632470990436733e+09
+ramses_messages_created{code="dhw_params",destination_device="01:234576",message_type="dhw_params",source_device="18:147744",verb="RQ"} 1.763247099046305e+09
+ramses_messages_created{code="dhw_params",destination_device="18:147744",message_type="dhw_params",source_device="01:234576",verb="RP"} 1.7632470990472212e+09
+ramses_messages_created{code="tpi_params",destination_device="13:004003",message_type="tpi_params",source_device="18:147744",verb="RQ"} 1.763247099052463e+09
+ramses_messages_created{code="actuator_cycle",destination_device="13:243590",message_type="actuator_cycle",source_device="18:147744",verb="RQ"} 1.7632470990748665e+09
+ramses_messages_created{code="setpoint",destination_device="01:234576",message_type="setpoint",source_device="04:122502",verb="I"} 1.7632470990783565e+09
+ramses_messages_created{code="system_zones",destination_device="01:234576",message_type="system_zones",source_device="18:147744",verb="RQ"} 1.7632470990795374e+09
+ramses_messages_created{code="system_zones",destination_device="18:147744",message_type="system_zones",source_device="01:234576",verb="RP"} 1.7632470990805244e+09
+ramses_messages_created{code="dhw_mode",destination_device="01:234576",message_type="dhw_mode",source_device="18:147744",verb="RQ"} 1.7632470990875394e+09
+ramses_messages_created{code="dhw_mode",destination_device="18:147744",message_type="dhw_mode",source_device="01:234576",verb="RP"} 1.7632470990884547e+09
+ramses_messages_created{code="actuator_cycle",destination_device="13:004003",message_type="actuator_cycle",source_device="18:147744",verb="RQ"} 1.7632470990971072e+09
+ramses_messages_created{code="dhw_temp",destination_device="01:234576",message_type="dhw_temp",source_device="18:147744",verb="RQ"} 1.7632470991907494e+09
+ramses_messages_created{code="dhw_temp",destination_device="18:147744",message_type="dhw_temp",source_device="01:234576",verb="RP"} 1.7632470991917346e+09
+ramses_messages_created{code="system_mode",destination_device="01:234576",message_type="system_mode",source_device="18:147744",verb="RQ"} 1.7632470992272794e+09
+ramses_messages_created{code="system_mode",destination_device="18:147744",message_type="system_mode",source_device="01:234576",verb="RP"} 1.763247099228396e+09
+ramses_messages_created{code="schedule_version",destination_device="01:234576",message_type="schedule_version",source_device="18:147744",verb="RQ"} 1.7632470992292814e+09
+ramses_messages_created{code="schedule_version",destination_device="18:147744",message_type="schedule_version",source_device="01:234576",verb="RP"} 1.7632470992308593e+09
+ramses_messages_created{code="tpi_params",destination_device="01:234576",message_type="tpi_params",source_device="18:147744",verb="RQ"} 1.763247099231819e+09
+ramses_messages_created{code="tpi_params",destination_device="18:147744",message_type="tpi_params",source_device="01:234576",verb="RP"} 1.7632470992328417e+09
+ramses_messages_created{code="system_fault",destination_device="01:234576",message_type="system_fault",source_device="18:147744",verb="RQ"} 1.7632470992352064e+09
+ramses_messages_created{code="system_fault",destination_device="18:147744",message_type="system_fault",source_device="01:234576",verb="RP"} 1.7632470992362547e+09
+ramses_messages_created{code="zone_mode",destination_device="01:234576",message_type="zone_mode",source_device="18:147744",verb="RQ"} 1.7632470992449398e+09
+ramses_messages_created{code="zone_mode",destination_device="18:147744",message_type="zone_mode",source_device="01:234576",verb="RP"} 1.7632470992464404e+09
+ramses_messages_created{code="zone_name",destination_device="01:234576",message_type="zone_name",source_device="18:147744",verb="RQ"} 1.7632470992564626e+09
+ramses_messages_created{code="zone_name",destination_device="18:147744",message_type="zone_name",source_device="01:234576",verb="RP"} 1.7632470992574449e+09
+ramses_messages_created{code="zone_params",destination_device="01:234576",message_type="zone_params",source_device="18:147744",verb="RQ"} 1.7632470992714255e+09
+ramses_messages_created{code="zone_params",destination_device="18:147744",message_type="zone_params",source_device="01:234576",verb="RP"} 1.7632470992724178e+09
+ramses_messages_created{code="heat_demand",destination_device="01:234576",message_type="heat_demand",source_device="04:122498",verb="I"} 1.7632470993958156e+09
+ramses_messages_created{code="relay_demand",destination_device="unknown",message_type="relay_demand",source_device="01:234576",verb="I"} 1.7632470994005213e+09
+ramses_messages_created{code="heat_demand",destination_device="unknown",message_type="heat_demand",source_device="01:234576",verb="I"} 1.7632470994028676e+09
+ramses_messages_created{code="heat_demand",destination_device="01:234576",message_type="heat_demand",source_device="04:122294",verb="I"} 1.7632470994543612e+09
+ramses_messages_created{code="window_state",destination_device="01:234576",message_type="window_state",source_device="04:122504",verb="I"} 1.7632470994601789e+09
+ramses_messages_created{code="setpoint",destination_device="01:234576",message_type="setpoint",source_device="04:122504",verb="I"} 1.7632470994628296e+09
+ramses_messages_created{code="actuator_state",destination_device="13:243590",message_type="actuator_state",source_device="01:234576",verb="RQ"} 1.7632470994678895e+09
+ramses_messages_created{code="actuator_sync",destination_device="unknown",message_type="actuator_sync",source_device="01:234576",verb="I"} 1.76324709947933e+09
+ramses_messages_created{code="zone_mode",destination_device="unknown",message_type="zone_mode",source_device="01:234576",verb="I"} 1.7632470994804075e+09
+ramses_messages_created{code="heat_demand",destination_device="01:234576",message_type="heat_demand",source_device="04:122504",verb="I"} 1.7632470994887881e+09
+ramses_messages_created{code="window_state",destination_device="01:234576",message_type="window_state",source_device="18:147744",verb="RQ"} 1.7632470994925733e+09
+ramses_messages_created{code="window_state",destination_device="18:147744",message_type="window_state",source_device="01:234576",verb="RP"} 1.763247099498084e+09
+ramses_messages_created{code="temperature",destination_device="unknown",message_type="temperature",source_device="04:122500",verb="I"} 1.7632470995351741e+09
+ramses_messages_created{code="window_state",destination_device="01:234576",message_type="window_state",source_device="04:122820",verb="I"} 1.7632470995650637e+09
+ramses_messages_created{code="setpoint",destination_device="01:234576",message_type="setpoint",source_device="04:122820",verb="I"} 1.7632470995882518e+09
+ramses_messages_created{code="temperature",destination_device="unknown",message_type="temperature",source_device="04:122296",verb="I"} 1.7632470995892441e+09
+ramses_messages_created{code="setpoint",destination_device="01:234576",message_type="setpoint",source_device="04:122766",verb="I"} 1.7632470995985138e+09
+ramses_messages_created{code="window_state",destination_device="01:234576",message_type="window_state",source_device="04:122766",verb="I"} 1.7632470995996099e+09
+ramses_messages_created{code="temperature",destination_device="unknown",message_type="temperature",source_device="04:122292",verb="I"} 1.7632470996223483e+09
+ramses_messages_created{code="window_state",destination_device="01:234576",message_type="window_state",source_device="04:122294",verb="I"} 1.7632470996266422e+09
+ramses_messages_created{code="window_state",destination_device="01:234576",message_type="window_state",source_device="04:122296",verb="I"} 1.7632471000205874e+09
+ramses_messages_created{code="temperature",destination_device="unknown",message_type="temperature",source_device="04:122840",verb="I"} 1.7632471001623137e+09
+ramses_messages_created{code="window_state",destination_device="01:234576",message_type="window_state",source_device="04:122840",verb="I"} 1.7632471001633759e+09
+ramses_messages_created{code="setpoint",destination_device="01:234576",message_type="setpoint",source_device="04:122840",verb="I"} 1.7632471001726053e+09
+ramses_messages_created{code="setpoint",destination_device="01:234576",message_type="setpoint",source_device="04:122294",verb="I"} 1.763247100177115e+09
+ramses_messages_created{code="heat_demand",destination_device="01:234576",message_type="heat_demand",source_device="04:122296",verb="I"} 1.7632471001807287e+09
+ramses_messages_created{code="heat_demand",destination_device="01:234576",message_type="heat_demand",source_device="04:122820",verb="I"} 1.7632471001845386e+09
+ramses_messages_created{code="heat_demand",destination_device="01:234576",message_type="heat_demand",source_device="04:122840",verb="I"} 1.763247100186156e+09
+ramses_messages_created{code="heat_demand",destination_device="01:234576",message_type="heat_demand",source_device="04:122292",verb="I"} 1.7632471001871831e+09
+ramses_messages_created{code="heat_demand",destination_device="01:234576",message_type="heat_demand",source_device="04:122766",verb="I"} 1.7632471001882043e+09
+ramses_messages_created{code="temperature",destination_device="unknown",message_type="temperature",source_device="04:122820",verb="I"} 1.7632471004812608e+09
+ramses_messages_created{code="heat_demand",destination_device="01:234576",message_type="heat_demand",source_device="04:122500",verb="I"} 1.7632471004839172e+09
+ramses_messages_created{code="heat_demand",destination_device="01:234576",message_type="heat_demand",source_device="04:122846",verb="I"} 1.7632471005480576e+09
+ramses_messages_created{code="window_state",destination_device="01:234576",message_type="window_state",source_device="04:122498",verb="I"} 1.7632471006398027e+09
+ramses_messages_created{code="window_state",destination_device="01:234576",message_type="window_state",source_device="04:122502",verb="I"} 1.7632471011598237e+09
+ramses_messages_created{code="temperature",destination_device="unknown",message_type="temperature",source_device="04:122504",verb="I"} 1.7632471015877063e+09
+ramses_messages_created{code="setpoint",destination_device="01:234576",message_type="setpoint",source_device="04:122498",verb="I"} 1.7632471018119214e+09
+ramses_messages_created{code="temperature",destination_device="unknown",message_type="temperature",source_device="04:122846",verb="I"} 1.7632471018164716e+09
+ramses_messages_created{code="temperature",destination_device="unknown",message_type="temperature",source_device="04:122290",verb="I"} 1.763247102955323e+09
+ramses_messages_created{code="zone_params",destination_device="unknown",message_type="zone_params",source_device="01:234576",verb="I"} 1.763247103097204e+09
+ramses_messages_created{code="setpoint",destination_device="01:234576",message_type="setpoint",source_device="04:122296",verb="I"} 1.7632471041348867e+09
+ramses_messages_created{code="heat_demand",destination_device="01:234576",message_type="heat_demand",source_device="04:122290",verb="I"} 1.7632471048444211e+09
+ramses_messages_created{code="temperature",destination_device="unknown",message_type="temperature",source_device="04:122294",verb="I"} 1.7632471048454075e+09
+ramses_messages_created{code="window_state",destination_device="01:234576",message_type="window_state",source_device="04:122500",verb="I"} 1.7632471048565247e+09
+ramses_messages_created{code="temperature",destination_device="unknown",message_type="temperature",source_device="04:122766",verb="I"} 1.7632471049287622e+09
+ramses_messages_created{code="setpoint",destination_device="01:234576",message_type="setpoint",source_device="04:122500",verb="I"} 1.7632471063530908e+09
+ramses_messages_created{code="window_state",destination_device="01:234576",message_type="window_state",source_device="04:122292",verb="I"} 1.7632471063556952e+09
+ramses_messages_created{code="setpoint",destination_device="01:234576",message_type="setpoint",source_device="04:122292",verb="I"} 1.7632471063604162e+09
+ramses_messages_created{code="temperature",destination_device="unknown",message_type="temperature",source_device="04:122502",verb="I"} 1.7632471063664775e+09
+ramses_messages_created{code="window_state",destination_device="01:234576",message_type="window_state",source_device="04:122846",verb="I"} 1.7632471063711667e+09
+ramses_messages_created{code="setpoint",destination_device="01:234576",message_type="setpoint",source_device="04:122846",verb="I"} 1.7632471066505034e+09
 # HELP ramses_message_types_total Total number of messages by type
 # TYPE ramses_message_types_total counter
 ramses_message_types_total{code="puzzle_packet",code_name="puzzle_packet",verb="I"} 78.0
@@ -242,49 +242,49 @@ ramses_message_types_total{code="window_state",code_name="window_state",verb="RP
 ramses_message_types_total{code="zone_params",code_name="zone_params",verb="I"} 2.0
 # HELP ramses_message_types_created Total number of messages by type
 # TYPE ramses_message_types_created gauge
-ramses_message_types_created{code="puzzle_packet",code_name="puzzle_packet",verb="I"} 1.763246929936599e+09
-ramses_message_types_created{code="temperature",code_name="temperature",verb="I"} 1.763246929954836e+09
-ramses_message_types_created{code="system_sync",code_name="system_sync",verb="I"} 1.7632469299558933e+09
-ramses_message_types_created{code="setpoint",code_name="setpoint",verb="I"} 1.763246929957192e+09
-ramses_message_types_created{code="zone_devices",code_name="zone_devices",verb="RQ"} 1.763246929960637e+09
-ramses_message_types_created{code="zone_devices",code_name="zone_devices",verb="RP"} 1.7632469299628425e+09
-ramses_message_types_created{code="temperature",code_name="temperature",verb="RQ"} 1.7632469299639351e+09
-ramses_message_types_created{code="temperature",code_name="temperature",verb="RP"} 1.7632469299649303e+09
-ramses_message_types_created{code="relay_demand",code_name="relay_demand",verb="RQ"} 1.7632469300005178e+09
-ramses_message_types_created{code="tpi_params",code_name="tpi_params",verb="RQ"} 1.7632469300106988e+09
-ramses_message_types_created{code="datetime",code_name="datetime",verb="RQ"} 1.7632469300116994e+09
-ramses_message_types_created{code="datetime",code_name="datetime",verb="RP"} 1.7632469300128233e+09
-ramses_message_types_created{code="dhw_params",code_name="dhw_params",verb="RQ"} 1.7632469300163763e+09
-ramses_message_types_created{code="dhw_params",code_name="dhw_params",verb="RP"} 1.7632469300174549e+09
-ramses_message_types_created{code="actuator_cycle",code_name="actuator_cycle",verb="RQ"} 1.763246930045373e+09
-ramses_message_types_created{code="system_zones",code_name="system_zones",verb="RQ"} 1.7632469300527818e+09
-ramses_message_types_created{code="system_zones",code_name="system_zones",verb="RP"} 1.763246930055136e+09
-ramses_message_types_created{code="dhw_mode",code_name="dhw_mode",verb="RQ"} 1.7632469300596912e+09
-ramses_message_types_created{code="dhw_mode",code_name="dhw_mode",verb="RP"} 1.763246930060688e+09
-ramses_message_types_created{code="dhw_temp",code_name="dhw_temp",verb="RQ"} 1.7632469301560948e+09
-ramses_message_types_created{code="dhw_temp",code_name="dhw_temp",verb="RP"} 1.7632469301572073e+09
-ramses_message_types_created{code="system_mode",code_name="system_mode",verb="RQ"} 1.7632469302023253e+09
-ramses_message_types_created{code="system_mode",code_name="system_mode",verb="RP"} 1.7632469302032802e+09
-ramses_message_types_created{code="schedule_version",code_name="schedule_version",verb="RQ"} 1.7632469302043114e+09
-ramses_message_types_created{code="schedule_version",code_name="schedule_version",verb="RP"} 1.7632469302053425e+09
-ramses_message_types_created{code="tpi_params",code_name="tpi_params",verb="RP"} 1.7632469302090154e+09
-ramses_message_types_created{code="system_fault",code_name="system_fault",verb="RQ"} 1.7632469302106147e+09
-ramses_message_types_created{code="system_fault",code_name="system_fault",verb="RP"} 1.7632469302126346e+09
-ramses_message_types_created{code="zone_mode",code_name="zone_mode",verb="RQ"} 1.7632469302396626e+09
-ramses_message_types_created{code="zone_mode",code_name="zone_mode",verb="RP"} 1.7632469302407885e+09
-ramses_message_types_created{code="zone_name",code_name="zone_name",verb="RQ"} 1.7632469302522378e+09
-ramses_message_types_created{code="zone_name",code_name="zone_name",verb="RP"} 1.7632469302532914e+09
-ramses_message_types_created{code="zone_params",code_name="zone_params",verb="RQ"} 1.763246930268039e+09
-ramses_message_types_created{code="zone_params",code_name="zone_params",verb="RP"} 1.7632469302690675e+09
-ramses_message_types_created{code="heat_demand",code_name="heat_demand",verb="I"} 1.7632469303965635e+09
-ramses_message_types_created{code="relay_demand",code_name="relay_demand",verb="I"} 1.7632469304005384e+09
-ramses_message_types_created{code="window_state",code_name="window_state",verb="I"} 1.7632469304643836e+09
-ramses_message_types_created{code="actuator_state",code_name="actuator_state",verb="RQ"} 1.76324693047286e+09
-ramses_message_types_created{code="actuator_sync",code_name="actuator_sync",verb="I"} 1.7632469304800234e+09
-ramses_message_types_created{code="zone_mode",code_name="zone_mode",verb="I"} 1.7632469304810805e+09
-ramses_message_types_created{code="window_state",code_name="window_state",verb="RQ"} 1.7632469304864311e+09
-ramses_message_types_created{code="window_state",code_name="window_state",verb="RP"} 1.7632469304874492e+09
-ramses_message_types_created{code="zone_params",code_name="zone_params",verb="I"} 1.7632469338906462e+09
+ramses_message_types_created{code="puzzle_packet",code_name="puzzle_packet",verb="I"} 1.763247098973445e+09
+ramses_message_types_created{code="temperature",code_name="temperature",verb="I"} 1.7632470989903688e+09
+ramses_message_types_created{code="system_sync",code_name="system_sync",verb="I"} 1.7632470989914415e+09
+ramses_message_types_created{code="setpoint",code_name="setpoint",verb="I"} 1.7632470989926372e+09
+ramses_message_types_created{code="zone_devices",code_name="zone_devices",verb="RQ"} 1.763247098997201e+09
+ramses_message_types_created{code="zone_devices",code_name="zone_devices",verb="RP"} 1.7632470989987483e+09
+ramses_message_types_created{code="temperature",code_name="temperature",verb="RQ"} 1.7632470989997418e+09
+ramses_message_types_created{code="temperature",code_name="temperature",verb="RP"} 1.7632470990007522e+09
+ramses_message_types_created{code="relay_demand",code_name="relay_demand",verb="RQ"} 1.7632470990316072e+09
+ramses_message_types_created{code="tpi_params",code_name="tpi_params",verb="RQ"} 1.763247099039482e+09
+ramses_message_types_created{code="datetime",code_name="datetime",verb="RQ"} 1.7632470990413477e+09
+ramses_message_types_created{code="datetime",code_name="datetime",verb="RP"} 1.7632470990436842e+09
+ramses_message_types_created{code="dhw_params",code_name="dhw_params",verb="RQ"} 1.7632470990463161e+09
+ramses_message_types_created{code="dhw_params",code_name="dhw_params",verb="RP"} 1.763247099047231e+09
+ramses_message_types_created{code="actuator_cycle",code_name="actuator_cycle",verb="RQ"} 1.7632470990748773e+09
+ramses_message_types_created{code="system_zones",code_name="system_zones",verb="RQ"} 1.7632470990795476e+09
+ramses_message_types_created{code="system_zones",code_name="system_zones",verb="RP"} 1.7632470990805392e+09
+ramses_message_types_created{code="dhw_mode",code_name="dhw_mode",verb="RQ"} 1.7632470990875506e+09
+ramses_message_types_created{code="dhw_mode",code_name="dhw_mode",verb="RP"} 1.763247099088465e+09
+ramses_message_types_created{code="dhw_temp",code_name="dhw_temp",verb="RQ"} 1.76324709919076e+09
+ramses_message_types_created{code="dhw_temp",code_name="dhw_temp",verb="RP"} 1.763247099191745e+09
+ramses_message_types_created{code="system_mode",code_name="system_mode",verb="RQ"} 1.7632470992272897e+09
+ramses_message_types_created{code="system_mode",code_name="system_mode",verb="RP"} 1.7632470992284062e+09
+ramses_message_types_created{code="schedule_version",code_name="schedule_version",verb="RQ"} 1.7632470992292914e+09
+ramses_message_types_created{code="schedule_version",code_name="schedule_version",verb="RP"} 1.7632470992308695e+09
+ramses_message_types_created{code="tpi_params",code_name="tpi_params",verb="RP"} 1.763247099232851e+09
+ramses_message_types_created{code="system_fault",code_name="system_fault",verb="RQ"} 1.7632470992352161e+09
+ramses_message_types_created{code="system_fault",code_name="system_fault",verb="RP"} 1.7632470992362673e+09
+ramses_message_types_created{code="zone_mode",code_name="zone_mode",verb="RQ"} 1.7632470992449496e+09
+ramses_message_types_created{code="zone_mode",code_name="zone_mode",verb="RP"} 1.7632470992464502e+09
+ramses_message_types_created{code="zone_name",code_name="zone_name",verb="RQ"} 1.7632470992564726e+09
+ramses_message_types_created{code="zone_name",code_name="zone_name",verb="RP"} 1.7632470992574544e+09
+ramses_message_types_created{code="zone_params",code_name="zone_params",verb="RQ"} 1.763247099271436e+09
+ramses_message_types_created{code="zone_params",code_name="zone_params",verb="RP"} 1.7632470992724283e+09
+ramses_message_types_created{code="heat_demand",code_name="heat_demand",verb="I"} 1.7632470993958273e+09
+ramses_message_types_created{code="relay_demand",code_name="relay_demand",verb="I"} 1.7632470994005318e+09
+ramses_message_types_created{code="window_state",code_name="window_state",verb="I"} 1.7632470994601889e+09
+ramses_message_types_created{code="actuator_state",code_name="actuator_state",verb="RQ"} 1.7632470994678998e+09
+ramses_message_types_created{code="actuator_sync",code_name="actuator_sync",verb="I"} 1.7632470994793417e+09
+ramses_message_types_created{code="zone_mode",code_name="zone_mode",verb="I"} 1.763247099480417e+09
+ramses_message_types_created{code="window_state",code_name="window_state",verb="RQ"} 1.7632470994925847e+09
+ramses_message_types_created{code="window_state",code_name="window_state",verb="RP"} 1.7632470994980953e+09
+ramses_message_types_created{code="zone_params",code_name="zone_params",verb="I"} 1.763247103097215e+09
 # HELP ramses_device_communications_total Total number of communications between devices
 # TYPE ramses_device_communications_total counter
 ramses_device_communications_total{destination_device="63:262142",source_device="18:147744",verb="I"} 78.0
@@ -320,43 +320,43 @@ ramses_device_communications_total{destination_device="unknown",source_device="0
 ramses_device_communications_total{destination_device="unknown",source_device="04:122502",verb="I"} 1.0
 # HELP ramses_device_communications_created Total number of communications between devices
 # TYPE ramses_device_communications_created gauge
-ramses_device_communications_created{destination_device="63:262142",source_device="18:147744",verb="I"} 1.7632469299366088e+09
-ramses_device_communications_created{destination_device="unknown",source_device="04:122498",verb="I"} 1.7632469299548447e+09
-ramses_device_communications_created{destination_device="unknown",source_device="01:234576",verb="I"} 1.7632469299559064e+09
-ramses_device_communications_created{destination_device="01:234576",source_device="18:147744",verb="RQ"} 1.7632469299606452e+09
-ramses_device_communications_created{destination_device="18:147744",source_device="01:234576",verb="RP"} 1.7632469299628503e+09
-ramses_device_communications_created{destination_device="13:243590",source_device="18:147744",verb="RQ"} 1.763246930000527e+09
-ramses_device_communications_created{destination_device="13:004003",source_device="18:147744",verb="RQ"} 1.7632469300091531e+09
-ramses_device_communications_created{destination_device="01:234576",source_device="04:122502",verb="I"} 1.7632469300506382e+09
-ramses_device_communications_created{destination_device="01:234576",source_device="04:122498",verb="I"} 1.7632469303965719e+09
-ramses_device_communications_created{destination_device="01:234576",source_device="04:122294",verb="I"} 1.7632469304595592e+09
-ramses_device_communications_created{destination_device="01:234576",source_device="04:122504",verb="I"} 1.7632469304643908e+09
-ramses_device_communications_created{destination_device="13:243590",source_device="01:234576",verb="RQ"} 1.7632469304728687e+09
-ramses_device_communications_created{destination_device="unknown",source_device="04:122500",verb="I"} 1.763246930510717e+09
-ramses_device_communications_created{destination_device="01:234576",source_device="04:122820",verb="I"} 1.7632469305207987e+09
-ramses_device_communications_created{destination_device="unknown",source_device="04:122296",verb="I"} 1.76324693052813e+09
-ramses_device_communications_created{destination_device="01:234576",source_device="04:122766",verb="I"} 1.7632469305291593e+09
-ramses_device_communications_created{destination_device="unknown",source_device="04:122292",verb="I"} 1.7632469305432217e+09
-ramses_device_communications_created{destination_device="01:234576",source_device="04:122296",verb="I"} 1.7632469308992045e+09
-ramses_device_communications_created{destination_device="unknown",source_device="04:122840",verb="I"} 1.7632469310313566e+09
-ramses_device_communications_created{destination_device="01:234576",source_device="04:122840",verb="I"} 1.763246931032458e+09
-ramses_device_communications_created{destination_device="01:234576",source_device="04:122292",verb="I"} 1.7632469310560186e+09
-ramses_device_communications_created{destination_device="unknown",source_device="04:122820",verb="I"} 1.763246931455337e+09
-ramses_device_communications_created{destination_device="01:234576",source_device="04:122500",verb="I"} 1.763246931459616e+09
-ramses_device_communications_created{destination_device="01:234576",source_device="04:122846",verb="I"} 1.763246931538728e+09
-ramses_device_communications_created{destination_device="unknown",source_device="04:122504",verb="I"} 1.7632469325637288e+09
-ramses_device_communications_created{destination_device="unknown",source_device="04:122846",verb="I"} 1.76324693280197e+09
-ramses_device_communications_created{destination_device="unknown",source_device="04:122290",verb="I"} 1.7632469337675574e+09
-ramses_device_communications_created{destination_device="01:234576",source_device="04:122290",verb="I"} 1.7632469352666519e+09
-ramses_device_communications_created{destination_device="unknown",source_device="04:122294",verb="I"} 1.763246935267707e+09
-ramses_device_communications_created{destination_device="unknown",source_device="04:122766",verb="I"} 1.7632469353531249e+09
-ramses_device_communications_created{destination_device="unknown",source_device="04:122502",verb="I"} 1.7632469368650339e+09
+ramses_device_communications_created{destination_device="63:262142",source_device="18:147744",verb="I"} 1.763247098973457e+09
+ramses_device_communications_created{destination_device="unknown",source_device="04:122498",verb="I"} 1.7632470989903772e+09
+ramses_device_communications_created{destination_device="unknown",source_device="01:234576",verb="I"} 1.7632470989914496e+09
+ramses_device_communications_created{destination_device="01:234576",source_device="18:147744",verb="RQ"} 1.7632470989972134e+09
+ramses_device_communications_created{destination_device="18:147744",source_device="01:234576",verb="RP"} 1.7632470989987562e+09
+ramses_device_communications_created{destination_device="13:243590",source_device="18:147744",verb="RQ"} 1.763247099031615e+09
+ramses_device_communications_created{destination_device="13:004003",source_device="18:147744",verb="RQ"} 1.7632470990384336e+09
+ramses_device_communications_created{destination_device="01:234576",source_device="04:122502",verb="I"} 1.763247099078371e+09
+ramses_device_communications_created{destination_device="01:234576",source_device="04:122498",verb="I"} 1.7632470993958354e+09
+ramses_device_communications_created{destination_device="01:234576",source_device="04:122294",verb="I"} 1.7632470994543746e+09
+ramses_device_communications_created{destination_device="01:234576",source_device="04:122504",verb="I"} 1.763247099460196e+09
+ramses_device_communications_created{destination_device="13:243590",source_device="01:234576",verb="RQ"} 1.763247099467908e+09
+ramses_device_communications_created{destination_device="unknown",source_device="04:122500",verb="I"} 1.7632470995351887e+09
+ramses_device_communications_created{destination_device="01:234576",source_device="04:122820",verb="I"} 1.7632470995650806e+09
+ramses_device_communications_created{destination_device="unknown",source_device="04:122296",verb="I"} 1.7632470995892582e+09
+ramses_device_communications_created{destination_device="01:234576",source_device="04:122766",verb="I"} 1.7632470995985308e+09
+ramses_device_communications_created{destination_device="unknown",source_device="04:122292",verb="I"} 1.7632470996223614e+09
+ramses_device_communications_created{destination_device="01:234576",source_device="04:122296",verb="I"} 1.763247100020604e+09
+ramses_device_communications_created{destination_device="unknown",source_device="04:122840",verb="I"} 1.7632471001623285e+09
+ramses_device_communications_created{destination_device="01:234576",source_device="04:122840",verb="I"} 1.7632471001633902e+09
+ramses_device_communications_created{destination_device="01:234576",source_device="04:122292",verb="I"} 1.7632471001871974e+09
+ramses_device_communications_created{destination_device="unknown",source_device="04:122820",verb="I"} 1.763247100481275e+09
+ramses_device_communications_created{destination_device="01:234576",source_device="04:122500",verb="I"} 1.7632471004839315e+09
+ramses_device_communications_created{destination_device="01:234576",source_device="04:122846",verb="I"} 1.763247100548072e+09
+ramses_device_communications_created{destination_device="unknown",source_device="04:122504",verb="I"} 1.7632471015877223e+09
+ramses_device_communications_created{destination_device="unknown",source_device="04:122846",verb="I"} 1.7632471018164861e+09
+ramses_device_communications_created{destination_device="unknown",source_device="04:122290",verb="I"} 1.7632471029553368e+09
+ramses_device_communications_created{destination_device="01:234576",source_device="04:122290",verb="I"} 1.7632471048444355e+09
+ramses_device_communications_created{destination_device="unknown",source_device="04:122294",verb="I"} 1.7632471048454218e+09
+ramses_device_communications_created{destination_device="unknown",source_device="04:122766",verb="I"} 1.7632471049287765e+09
+ramses_device_communications_created{destination_device="unknown",source_device="04:122502",verb="I"} 1.7632471063664925e+09
 # HELP ramses_active_devices Number of active devices in the system
 # TYPE ramses_active_devices gauge
 ramses_active_devices 0.0
 # HELP ramses_last_message_timestamp Timestamp of the last message received
 # TYPE ramses_last_message_timestamp gauge
-ramses_last_message_timestamp 1.7632469398751087e+09
+ramses_last_message_timestamp 1.763247109425306e+09
 # HELP ramses_message_rate Messages per second over the last minute
 # TYPE ramses_message_rate gauge
 ramses_message_rate 0.0
@@ -374,10 +374,10 @@ ramses_message_processing_duration_seconds_count 0.0
 ramses_message_processing_duration_seconds_sum 0.0
 # HELP ramses_message_processing_duration_seconds_created Time spent processing messages
 # TYPE ramses_message_processing_duration_seconds_created gauge
-ramses_message_processing_duration_seconds_created 1.763246929931901e+09
+ramses_message_processing_duration_seconds_created 1.7632470989547336e+09
 # HELP ramses_system_info Information about the RAMSES RF system
 # TYPE ramses_system_info gauge
-ramses_system_info{gateway_version="<MagicMock name='mock.version.replace().replace().replace()' id='139921530381456'>",last_message_code="system_zones",last_message_verb="RP",total_devices="0"} 1.0
+ramses_system_info{gateway_version="<MagicMock name='mock.version.replace().replace().replace()' id='139720381873616'>",last_message_code="system_zones",last_message_verb="RP",total_devices="0"} 1.0
 # HELP ramses_message_errors_total Total number of message processing errors
 # TYPE ramses_message_errors_total counter
 # HELP ramses_message_payload_size_bytes Size of message payloads
@@ -394,7 +394,7 @@ ramses_message_payload_size_bytes_count 4813.0
 ramses_message_payload_size_bytes_sum 347869.0
 # HELP ramses_message_payload_size_bytes_created Size of message payloads
 # TYPE ramses_message_payload_size_bytes_created gauge
-ramses_message_payload_size_bytes_created 1.7632469299319859e+09
+ramses_message_payload_size_bytes_created 1.7632470989548237e+09
 # HELP ramses_device_temperature_celsius Temperature reading per device in Celsius
 # TYPE ramses_device_temperature_celsius gauge
 ramses_device_temperature_celsius{device_id="04:122498"} 17.46
@@ -416,24 +416,33 @@ ramses_device_temperature_celsius{device_id="04:122502"} 16.13
 # TYPE ramses_zone_info gauge
 ramses_zone_info{zone_idx="08",zone_name="Master Bedroom"} 1.0
 ramses_zone_info{zone_idx="0A",zone_name="Office"} 1.0
+ramses_zone_info{zone_idx="08",zone_name="Bedroom 2"} 1.0
+ramses_zone_info{zone_idx="09",zone_name="Bathroom 1"} 1.0
 ramses_zone_info{zone_idx="02",zone_name="Kitchen"} 1.0
 ramses_zone_info{zone_idx="01",zone_name="Living Room"} 1.0
+ramses_zone_info{zone_idx="03",zone_name="Hallway"} 1.0
+ramses_zone_info{zone_idx="06",zone_name="Bedroom 3"} 1.0
+ramses_zone_info{zone_idx="07",zone_name="Bathroom 2"} 1.0
+ramses_zone_info{zone_idx="00",zone_name="Living Room"} 1.0
+ramses_zone_info{zone_idx="05",zone_name="Master Bedroom"} 1.0
+ramses_zone_info{zone_idx="01",zone_name="Sun Room"} 1.0
+ramses_zone_info{zone_idx="04",zone_name="Bedroom 4"} 1.0
 # HELP ramses_device_last_seen_timestamp Unix timestamp of the last message received from each device
 # TYPE ramses_device_last_seen_timestamp gauge
-ramses_device_last_seen_timestamp{device_id="18:147744"} 1.763246939860721e+09
-ramses_device_last_seen_timestamp{device_id="04:122498"} 1.763246938722354e+09
-ramses_device_last_seen_timestamp{device_id="01:234576"} 1.763246939875054e+09
-ramses_device_last_seen_timestamp{device_id="04:122502"} 1.7632469383894258e+09
-ramses_device_last_seen_timestamp{device_id="04:122294"} 1.7632469387280219e+09
-ramses_device_last_seen_timestamp{device_id="04:122504"} 1.7632469391356068e+09
-ramses_device_last_seen_timestamp{device_id="04:122500"} 1.763246939431451e+09
-ramses_device_last_seen_timestamp{device_id="04:122820"} 1.7632469397305868e+09
-ramses_device_last_seen_timestamp{device_id="04:122296"} 1.7632469385574512e+09
-ramses_device_last_seen_timestamp{device_id="04:122766"} 1.7632469397085464e+09
-ramses_device_last_seen_timestamp{device_id="04:122292"} 1.7632469375414138e+09
-ramses_device_last_seen_timestamp{device_id="04:122840"} 1.763246939398862e+09
-ramses_device_last_seen_timestamp{device_id="04:122846"} 1.7632469391331344e+09
-ramses_device_last_seen_timestamp{device_id="04:122290"} 1.7632469378733013e+09
+ramses_device_last_seen_timestamp{device_id="18:147744"} 1.7632471094150198e+09
+ramses_device_last_seen_timestamp{device_id="04:122498"} 1.7632471082086868e+09
+ramses_device_last_seen_timestamp{device_id="01:234576"} 1.7632471094252815e+09
+ramses_device_last_seen_timestamp{device_id="04:122502"} 1.7632471078414247e+09
+ramses_device_last_seen_timestamp{device_id="04:122294"} 1.763247108212252e+09
+ramses_device_last_seen_timestamp{device_id="04:122504"} 1.7632471086131272e+09
+ramses_device_last_seen_timestamp{device_id="04:122500"} 1.7632471089835553e+09
+ramses_device_last_seen_timestamp{device_id="04:122820"} 1.7632471092869391e+09
+ramses_device_last_seen_timestamp{device_id="04:122296"} 1.763247108008669e+09
+ramses_device_last_seen_timestamp{device_id="04:122766"} 1.7632471092654343e+09
+ramses_device_last_seen_timestamp{device_id="04:122292"} 1.7632471070968313e+09
+ramses_device_last_seen_timestamp{device_id="04:122840"} 1.7632471089488354e+09
+ramses_device_last_seen_timestamp{device_id="04:122846"} 1.763247108612102e+09
+ramses_device_last_seen_timestamp{device_id="04:122290"} 1.763247107333427e+09
 # HELP ramses_device_setpoint_celsius Target temperature setpoint per device or zone in Celsius
 # TYPE ramses_device_setpoint_celsius gauge
 ramses_device_setpoint_celsius{device_id="01:234576",zone_idx="00"} 50.0
@@ -569,7 +578,7 @@ ramses_heat_demand{device_id="04:122290",zone_idx="09"} 0.0
 ramses_system_sync_remaining_seconds{device_id="01:234576"} 156.0
 # HELP ramses_system_sync_last_timestamp Unix timestamp of the last system sync message received
 # TYPE ramses_system_sync_last_timestamp gauge
-ramses_system_sync_last_timestamp{device_id="01:234576"} 1.7632469394070508e+09
+ramses_system_sync_last_timestamp{device_id="01:234576"} 1.763247108958998e+09
 # HELP ramses_boiler_messages_sent_total Total number of messages sent to boilers
 # TYPE ramses_boiler_messages_sent_total counter
 ramses_boiler_messages_sent_total{boiler_id="13:243590",boiler_name="unknown",message_code="relay_demand",message_type="relay_demand"} 38.0
@@ -581,21 +590,21 @@ ramses_boiler_messages_sent_total{boiler_id="13:004003",boiler_name="unknown",me
 ramses_boiler_messages_sent_total{boiler_id="13:243590",boiler_name="unknown",message_code="actuator_state",message_type="actuator_state"} 9.0
 # HELP ramses_boiler_messages_sent_created Total number of messages sent to boilers
 # TYPE ramses_boiler_messages_sent_created gauge
-ramses_boiler_messages_sent_created{boiler_id="13:243590",boiler_name="unknown",message_code="relay_demand",message_type="relay_demand"} 1.7632469300005627e+09
-ramses_boiler_messages_sent_created{boiler_id="13:004003",boiler_name="unknown",message_code="relay_demand",message_type="relay_demand"} 1.763246930009184e+09
-ramses_boiler_messages_sent_created{boiler_id="13:243590",boiler_name="unknown",message_code="tpi_params",message_type="tpi_params"} 1.763246930010733e+09
-ramses_boiler_messages_sent_created{boiler_id="13:004003",boiler_name="unknown",message_code="tpi_params",message_type="tpi_params"} 1.763246930023686e+09
-ramses_boiler_messages_sent_created{boiler_id="13:243590",boiler_name="unknown",message_code="actuator_cycle",message_type="actuator_cycle"} 1.7632469300454354e+09
-ramses_boiler_messages_sent_created{boiler_id="13:004003",boiler_name="unknown",message_code="actuator_cycle",message_type="actuator_cycle"} 1.7632469300711582e+09
-ramses_boiler_messages_sent_created{boiler_id="13:243590",boiler_name="unknown",message_code="actuator_state",message_type="actuator_state"} 1.7632469304729168e+09
+ramses_boiler_messages_sent_created{boiler_id="13:243590",boiler_name="unknown",message_code="relay_demand",message_type="relay_demand"} 1.763247099031647e+09
+ramses_boiler_messages_sent_created{boiler_id="13:004003",boiler_name="unknown",message_code="relay_demand",message_type="relay_demand"} 1.7632470990384648e+09
+ramses_boiler_messages_sent_created{boiler_id="13:243590",boiler_name="unknown",message_code="tpi_params",message_type="tpi_params"} 1.763247099039525e+09
+ramses_boiler_messages_sent_created{boiler_id="13:004003",boiler_name="unknown",message_code="tpi_params",message_type="tpi_params"} 1.7632470990525043e+09
+ramses_boiler_messages_sent_created{boiler_id="13:243590",boiler_name="unknown",message_code="actuator_cycle",message_type="actuator_cycle"} 1.763247099074914e+09
+ramses_boiler_messages_sent_created{boiler_id="13:004003",boiler_name="unknown",message_code="actuator_cycle",message_type="actuator_cycle"} 1.763247099097147e+09
+ramses_boiler_messages_sent_created{boiler_id="13:243590",boiler_name="unknown",message_code="actuator_state",message_type="actuator_state"} 1.7632470994679384e+09
 # HELP ramses_boiler_messages_received_total Total number of messages received from boilers
 # TYPE ramses_boiler_messages_received_total counter
 # HELP ramses_boiler_last_seen_timestamp Unix timestamp of the last message from this boiler
 # TYPE ramses_boiler_last_seen_timestamp gauge
 # HELP ramses_boiler_last_contacted_timestamp Unix timestamp of the last message sent to this boiler
 # TYPE ramses_boiler_last_contacted_timestamp gauge
-ramses_boiler_last_contacted_timestamp{boiler_id="13:243590",boiler_name="unknown"} 1.7632469398596666e+09
-ramses_boiler_last_contacted_timestamp{boiler_id="13:004003",boiler_name="unknown"} 1.7632469398607373e+09
+ramses_boiler_last_contacted_timestamp{boiler_id="13:243590",boiler_name="unknown"} 1.7632471094134214e+09
+ramses_boiler_last_contacted_timestamp{boiler_id="13:004003",boiler_name="unknown"} 1.7632471094150374e+09
 # HELP ramses_boiler_setpoint_celsius Current boiler setpoint temperature in Celsius
 # TYPE ramses_boiler_setpoint_celsius gauge
 # HELP ramses_boiler_modulation_level Current boiler modulation level (0.0 to 1.0 representing 0-100%)

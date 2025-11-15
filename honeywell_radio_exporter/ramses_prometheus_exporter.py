@@ -600,6 +600,18 @@ class RamsesPrometheusExporter:
             payload_size = len(str(msg.payload))
             self.message_payload_size.observe(payload_size)
 
+            # Capture zone names directly from zone_name messages (code 0004)
+            # This allows us to learn zone names from the actual messages rather than
+            # depending on pre-configured gateway TCS zones
+            if (code == "0004" or code == "zone_name") and isinstance(msg.payload, dict):
+                if "zone_idx" in msg.payload and "name" in msg.payload:
+                    zone_idx = msg.payload["zone_idx"]
+                    zone_name = msg.payload["name"]
+                    if zone_idx and zone_name:
+                        # Directly set the zone_info metric
+                        self.zone_info.labels(zone_idx=zone_idx, zone_name=zone_name).set(1)
+                        logger.debug(f"Captured zone name from message: {zone_idx} -> {zone_name}")
+
             # Extract temperature from payload if available
             if isinstance(msg.payload, dict) and "temperature" in msg.payload:
                 try:
