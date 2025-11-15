@@ -620,18 +620,6 @@
         ]
       },
       {
-        "id": 20,
-        "title": "System Information",
-        "type": "text",
-        "content": "## RAMSES RF System Monitor\n\n### Metrics Available:\n- Device temperatures and setpoints\n- Heat demand per zone\n- Boiler communication health\n- Boiler setpoint and modulation\n- Zone window status\n- Zone operating modes\n- System sync cycles\n- Device activity tracking\n\n### Zone Filter\nUse the **Zone** dropdown at the top to filter data for specific zones.",
-        "gridPos": {
-          "h": 6,
-          "w": 24,
-          "x": 0,
-          "y": 62
-        }
-      },
-      {
         "id": 21,
         "title": "Boiler Setpoint",
         "type": "stat",
