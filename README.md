@@ -178,6 +178,7 @@ scrape_configs:
 - `ramses_device_setpoint_celsius`: Target temperature setpoint per device/zone
 - `ramses_device_info`: Device information (ID to name mapping)
 - `ramses_device_last_seen_timestamp`: Last message timestamp per device
+- `ramses_zone_info`: Zone information (zone index to zone name mapping)
 - `ramses_zone_window_open`: Window open state per zone (0=closed, 1=open)
 - `ramses_zone_mode_info`: Zone operating mode information
 - `ramses_heat_demand`: Heat demand per zone (0.0-1.0 = 0-100%)

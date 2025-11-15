@@ -197,6 +197,13 @@ class RamsesPrometheusExporter:
             ["device_id", "device_name"],
         )
 
+        # Zone info metric - maps zone_idx to zone_name
+        self.zone_info = Gauge(
+            "ramses_zone_info",
+            "Zone information mapping zone index to zone name (always 1)",
+            ["zone_idx", "zone_name"],
+        )
+
         # Device last seen gauge
         self.device_last_seen = Gauge(
             "ramses_device_last_seen_timestamp",
@@ -447,6 +454,46 @@ class RamsesPrometheusExporter:
         # Fallback to code string representation
         return str(code)
 
+    def _get_zone_name(self, zone_idx: str) -> str:
+        """Get zone name from gateway zones, return 'unknown' if not available."""
+        if not zone_idx or zone_idx == "unknown" or not self.gateway:
+            return "unknown"
+
+        try:
+            # Access the TCS (controller) to get zones
+            if hasattr(self.gateway, "_tcs") and self.gateway._tcs:
+                tcs = self.gateway._tcs
+                # Zones are accessed via the TCS
+                if hasattr(tcs, "zones") and tcs.zones:
+                    for zone in tcs.zones:
+                        if zone.idx == zone_idx:
+                            # Get the zone name if available
+                            if hasattr(zone, "name") and zone.name:
+                                return zone.name
+        except (AttributeError, KeyError, TypeError):
+            pass
+
+        return "unknown"
+
+    def _update_zone_info(self, zone_idx: str):
+        """Update zone info metric with zone index and name mapping.
+
+        Only creates/updates the metric if we have a real zone name (not 'unknown').
+        This prevents cluttering metrics with unknown zones.
+        """
+        if not zone_idx or zone_idx == "unknown":
+            return
+
+        zone_name = self._get_zone_name(zone_idx)
+
+        # Only set the metric if we have a real zone name (not 'unknown')
+        # This prevents creating metrics for zones before their names are discovered
+        if zone_name == "unknown":
+            return
+
+        # Set the zone info metric to 1 (it's always 1, used for joining)
+        self.zone_info.labels(zone_idx=zone_idx, zone_name=zone_name).set(1)
+
     def _update_device_info(self, device_id: str):
         """Update device info metric with device ID and name mapping.
 
@@ -572,6 +619,11 @@ class RamsesPrometheusExporter:
                     setpoint = float(msg.payload["setpoint"])
                     # Get zone_idx if available, otherwise use '00'
                     zone_idx = msg.payload.get("zone_idx", "00")
+
+                    # Update zone info if we have a zone_idx
+                    if zone_idx and zone_idx != "00":
+                        self._update_zone_info(zone_idx)
+
                     self.device_setpoint.labels(device_id=source_device, zone_idx=zone_idx).set(
                         setpoint
                     )
@@ -588,6 +640,11 @@ class RamsesPrometheusExporter:
                 try:
                     window_open = bool(msg.payload["window_open"])
                     zone_idx = msg.payload.get("zone_idx", "00")
+
+                    # Update zone info if we have a zone_idx
+                    if zone_idx and zone_idx != "00":
+                        self._update_zone_info(zone_idx)
+
                     # Set to 1 if open, 0 if closed
                     self.zone_window_open.labels(device_id=source_device, zone_idx=zone_idx).set(
                         1 if window_open else 0
@@ -606,6 +663,10 @@ class RamsesPrometheusExporter:
                 try:
                     mode = str(msg.payload["mode"])
                     zone_idx = msg.payload.get("zone_idx", "00")
+
+                    # Update zone info if we have a zone_idx
+                    if zone_idx and zone_idx != "00":
+                        self._update_zone_info(zone_idx)
 
                     # Clear previous mode metrics for this zone (set all to 0)
                     # This ensures only the current mode is set to 1
@@ -642,6 +703,10 @@ class RamsesPrometheusExporter:
                     # Heat demand can be zone-specific (zone_idx) or system-wide (domain_id)
                     # Use zone_idx if available, otherwise use domain_id, or '00' as fallback
                     zone_idx = msg.payload.get("zone_idx", msg.payload.get("domain_id", "00"))
+
+                    # Update zone info if we have a zone_idx
+                    if zone_idx and zone_idx != "00":
+                        self._update_zone_info(zone_idx)
 
                     self.heat_demand.labels(device_id=source_device, zone_idx=zone_idx).set(
                         heat_demand
