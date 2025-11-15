@@ -1,0 +1,16 @@
+# RAMSES RF Prometheus Exporter Requirements
+
+# Prometheus client library
+prometheus-client>=0.17.0
+
+# RAMSES RF dependencies (from the original project)
+colorlog>=6.9.0
+paho-mqtt>=2.1.0
+pyserial-asyncio-fast>=0.16
+voluptuous>=0.15.2
+
+# Additional dependencies for the exporter
+asyncio-mqtt>=0.16.0
+
+# For Grafana dashboard upload script
+requests>=2.25.0

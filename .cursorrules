@@ -1,0 +1,248 @@
+# Cursor Rules for Honeywell Radio Exporter Project
+
+## Code Quality Requirements
+
+### Always run tox before completing tasks
+When making code changes, always run the following tox commands to ensure code quality:
+
+1. **Format Check**: `venv/bin/python -m tox -e format-check`
+   - If formatting issues found, run: `venv/bin/python -m tox -e format`
+
+2. **Linting**: `venv/bin/python -m tox -e lint`
+   - Fix any pylint issues before proceeding
+
+3. **Markdown Check**: `venv/bin/python -m tox -e markdown` (if .md files changed)
+   - If formatting issues found, run: `venv/bin/python -m tox -e markdown-fix`
+
+4. **YAML Check**: `venv/bin/python -m tox -e yaml` (if .yml/.yaml files changed)
+   - Fix any yamllint issues manually
+
+5. **Tests**: `venv/bin/python -m tox -e test-no-cov` (faster) or `venv/bin/python -m tox -e test` (with coverage)
+   - Ensure all tests pass
+
+6. **All Checks**: `venv/bin/python -m tox -e all` (recommended before commit)
+   - Runs format-check, lint, tests, markdown, and yaml checks in sequence
+
+### Workflow
+- After editing Python files, run format and lint
+- After editing markdown files, run markdown check
+- After editing YAML files, run yaml check
+- After adding/modifying tests, run test suite
+- Before considering task complete, run all checks
+- Report results to user
+
+## Code Style
+
+### Line Length
+- **Maximum line length**: 100 characters (enforced by black and pylint)
+- Use black for automatic formatting: `venv/bin/python -m tox -e format`
+
+### Python Style
+- Follow PEP 8 with line length 100
+- Use type hints where appropriate
+- Docstrings are optional (disabled in pylint)
+- Protected access (_method) is allowed for internal helpers
+
+### Good Variable Names (pylint approved)
+- `i`, `j`, `k` - loop counters
+- `msg` - RAMSES RF messages
+- `src`, `dst` - source and destination devices
+- `uid` - unique identifiers
+- `id` - device IDs
+
+## Testing
+
+### Test Organization
+- Unit tests in `tests/test_*.py`
+- Test data in `tests/sample_data/`
+- Use pytest fixtures for setup
+- Mark slow tests with `@pytest.mark.slow`
+
+### Running Tests
+```bash
+# Quick test run (no coverage)
+venv/bin/python -m tox -e test-no-cov
+
+# With coverage
+venv/bin/python -m tox -e test
+
+# Specific test file
+venv/bin/python -m tox -e test-no-cov -- tests/test_device_names.py
+
+# Specific test function
+venv/bin/python -m tox -e test-no-cov -- tests/test_device_names.py::test_device_name_extraction
+
+# With output
+venv/bin/python -m tox -e test-no-cov -- -v -s
+
+# Disable coverage from pyproject.toml
+venv/bin/python -m pytest tests/ -v -o addopts=""
+```
+
+## Development Workflow
+
+### Before Starting Work
+1. Activate virtual environment: `source venv/bin/activate`
+2. Ensure dependencies are installed: `venv/bin/pip install -r requirements.txt`
+
+### During Development
+- Use `./scripts/dev.sh` for hot-reload development
+- Run `venv/bin/python -m tox -e format` after making changes
+- Run `venv/bin/python -m tox -e test-no-cov` after modifying logic
+
+### Before Committing
+1. Format code: `venv/bin/python -m tox -e format`
+2. Check all quality gates: `venv/bin/python -m tox -e all`
+3. Ensure all tests pass
+4. Fix any linting issues
+
+### When Creating New Features
+1. Write tests first (TDD when appropriate)
+2. Implement feature
+3. Run tox to validate
+4. Update documentation if needed
+
+## Project-Specific Guidelines
+
+### RAMSES RF Integration
+- Device IDs format: `XX:XXXXXX` (e.g., `01:234576`)
+- Device types: `01:` CTL, `04:` TRV, `13:` BDR, `18:` HGI, `10:` OTB
+- Message codes use underscore names (e.g., `system_sync`, `relay_demand`)
+- Gateway config needs `known_list` for device names/aliases
+
+### Prometheus Metrics
+- Use descriptive metric names with `ramses_` prefix
+- Counter for cumulative values (messages, errors)
+- Gauge for point-in-time values (temperature, setpoint)
+- Include units in metric names (e.g., `_celsius`, `_seconds`)
+- Use labels for dimensions (device_id, zone_idx)
+- Keep cardinality manageable (use info metrics for joins)
+
+### Logging
+- Main log: `/tmp/ramses.log` (rotated, 10MB, 5 backups)
+- Raw messages: `/tmp/ramses.msgs` (no rotation, for testing)
+- Use appropriate log levels: DEBUG, INFO, WARNING, ERROR
+- Include context in log messages (device IDs, message codes)
+
+## File Structure
+
+```
+honeywell-radio-exporter/
+├── honeywell_radio_exporter/  # Main package
+│   ├── __init__.py
+│   ├── __main__.py
+│   └── ramses_prometheus_exporter.py  # Core exporter logic
+├── tests/                     # Test suite
+│   ├── sample_data/          # Test data
+│   ├── test_device_names.py
+│   ├── test_exporter.py
+│   └── test_main.py
+├── scripts/                   # Utility scripts
+│   ├── dev.sh               # Development hot-reload
+│   ├── upload_grafana_dashboard.py
+│   └── example_upload.sh
+├── docs/                      # Documentation
+│   └── grafana-dashboard.json
+├── tox.ini                   # Test automation
+├── pyproject.toml           # Project config
+└── requirements.txt         # Dependencies
+```
+
+## Common Commands Reference
+
+### Tox Commands
+```bash
+# List all environments
+venv/bin/python -m tox -l
+
+# Format code (auto-fix)
+venv/bin/python -m tox -e format
+
+# Check formatting (no changes)
+venv/bin/python -m tox -e format-check
+
+# Run linting
+venv/bin/python -m tox -e lint
+
+# Check markdown (no changes)
+venv/bin/python -m tox -e markdown
+
+# Fix markdown formatting
+venv/bin/python -m tox -e markdown-fix
+
+# Check YAML files
+venv/bin/python -m tox -e yaml
+
+# Check all docs (markdown + yaml)
+venv/bin/python -m tox -e docs
+
+# Run tests (fast, no coverage)
+venv/bin/python -m tox -e test-no-cov
+
+# Run tests (with coverage)
+venv/bin/python -m tox -e test
+
+# Run all checks (recommended)
+venv/bin/python -m tox -e all
+
+# Recreate environment
+venv/bin/python -m tox -r -e test
+```
+
+### Direct Commands (without tox)
+```bash
+# Format
+venv/bin/black --line-length 100 honeywell_radio_exporter/ tests/ scripts/
+
+# Lint
+venv/bin/pylint honeywell_radio_exporter/ --max-line-length=100
+
+# Test
+venv/bin/python -m pytest tests/ -v -o addopts=""
+```
+
+### Development
+```bash
+# Start with hot-reload
+./scripts/dev.sh
+
+# Custom port
+./scripts/dev.sh --ramses-port /dev/ttyUSB0 --port 8001
+
+# Debug mode
+./scripts/dev.sh --log-level DEBUG
+```
+
+### Grafana Dashboard
+```bash
+# Upload to internal Grafana
+./scripts/upload_grafana_dashboard.py
+
+# Or with explicit URL
+./scripts/upload_grafana_dashboard.py --url http://grafana.my-monitoring.k8s.camarilla.local:3000
+```
+
+## Automation Expectations
+
+When the AI assistant makes changes to Python files:
+
+1. ✅ **Always** run `venv/bin/python -m tox -e format` to format code
+2. ✅ **Always** run `venv/bin/python -m tox -e lint` to check code quality
+3. ✅ **Always** run tests if logic changed: `venv/bin/python -m tox -e test-no-cov`
+4. ✅ **Always** report results to user (pass/fail, any issues found)
+5. ✅ **Always** fix any linting or formatting issues before considering task complete
+
+If any tox command fails:
+- Show the error to the user
+- Fix the issues
+- Re-run the tox command
+- Repeat until all checks pass
+
+## Notes
+
+- Line length is 100 (not 88) - this is intentional
+- Coverage reports are in `htmlcov/` directory
+- Prometheus metrics on http://localhost:8000/metrics
+- Grafana dashboard has 20 panels including boiler monitoring
+- Device names require `known_list` in gateway config
+

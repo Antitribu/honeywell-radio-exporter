@@ -1,0 +1,60 @@
+# yamllint configuration for Honeywell Radio Exporter
+
+extends: default
+
+rules:
+  # Line length - match our Python line length
+  line-length:
+    max: 100
+    level: warning
+
+  # Allow inline mappings for readability
+  braces:
+    max-spaces-inside: 1
+    level: error
+
+  # Allow inline sequences
+  brackets:
+    max-spaces-inside: 1
+    level: error
+
+  # Comments can be more relaxed
+  comments:
+    min-spaces-from-content: 1
+    level: warning
+
+  # Document start is optional
+  document-start:
+    present: false
+
+  # Indentation
+  indentation:
+    spaces: 2
+    indent-sequences: true
+
+  # Empty lines
+  empty-lines:
+    max: 2
+    level: warning
+
+  # Trailing spaces
+  trailing-spaces:
+    level: error
+
+  # Truthy values (allow yes/no, true/false, on/off)
+  truthy:
+    allowed-values: ['true', 'false', 'yes', 'no', 'on', 'off']
+    check-keys: false
+    level: warning
+
+ignore: |
+  venv/
+  .venv/
+  .tox/
+  htmlcov/
+  build/
+  dist/
+  *.egg-info/
+  __pycache__/
+  .pytest_cache/
+  .git/

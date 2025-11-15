@@ -1,0 +1,28 @@
+[Unit]
+Description=RAMSES RF Prometheus Exporter
+Documentation=https://github.com/ramses-rf/ramses_rf
+After=network.target
+
+[Service]
+Type=simple
+User=ramses
+Group=ramses
+WorkingDirectory=/home/simon/src/development/honeywell-radio-exporter/honeywell_radio_exporter
+ExecStart=/usr/bin/python3 /home/simon/src/development/honeywell-radio-exporter/honeywell_radio_exporter/ramses_prometheus_exporter.py --ramses-port /dev/ttyUSB0 --port 8000
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+# Security settings
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/dev/ttyUSB0
+
+# Environment variables
+Environment=PYTHONPATH=/home/simon/src/3rd-party/ramses_rf/src
+
+[Install]
+WantedBy=multi-user.target
