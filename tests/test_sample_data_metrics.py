@@ -92,7 +92,11 @@ def test_sample_data_metrics_generation():
         mock_zone3.idx = "08"
         mock_zone3.name = "Master Bedroom"
 
-        mock_tcs.zones = [mock_zone1, mock_zone2, mock_zone3]
+        mock_zone4 = MagicMock()
+        mock_zone4.idx = "0A"
+        mock_zone4.name = "Office"
+
+        mock_tcs.zones = [mock_zone1, mock_zone2, mock_zone3, mock_zone4]
         mock_gateway._tcs = mock_tcs
 
         exporter.gateway = mock_gateway
