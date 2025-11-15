@@ -5,6 +5,27 @@
     "tags": ["ramses", "rf", "hvac", "home-automation"],
     "style": "dark",
     "timezone": "browser",
+    "templating": {
+      "list": [
+        {
+          "name": "zone",
+          "type": "query",
+          "label": "Zone",
+          "datasource": "Prometheus",
+          "query": "label_values(ramses_zone_info, zone_name)",
+          "refresh": 1,
+          "multi": true,
+          "includeAll": true,
+          "allValue": ".*",
+          "current": {
+            "text": "All",
+            "value": "$__all"
+          },
+          "options": [],
+          "sort": 1
+        }
+      ]
+    },
     "panels": [
       {
         "id": 1,
@@ -140,7 +161,7 @@
         "targets": [
           {
             "expr": "ramses_device_temperature_celsius * on(device_id) group_left(device_name) ramses_device_info",
-            "legendFormat": "{{device_id}} - {{device_name}}"
+            "legendFormat": "{{device_name}}"
           }
         ],
         "gridPos": {
@@ -162,8 +183,8 @@
         "type": "graph",
         "targets": [
           {
-            "expr": "ramses_heat_demand * 100",
-            "legendFormat": "Device {{device_id}} Zone {{zone_idx}}"
+            "expr": "(ramses_heat_demand * on(zone_idx) group_left(zone_name) ramses_zone_info{zone_name=~\"$zone\"}) * 100",
+            "legendFormat": "{{zone_name}}"
           }
         ],
         "gridPos": {
@@ -357,12 +378,12 @@
         "type": "graph",
         "targets": [
           {
-            "expr": "ramses_device_setpoint_celsius * on(device_id) group_left(device_name) ramses_device_info",
-            "legendFormat": "{{device_id}} setpoint"
+            "expr": "ramses_device_setpoint_celsius * on(zone_idx) group_left(zone_name) ramses_zone_info{zone_name=~\"$zone\"}",
+            "legendFormat": "{{zone_name}} setpoint"
           },
           {
             "expr": "ramses_device_temperature_celsius * on(device_id) group_left(device_name) ramses_device_info",
-            "legendFormat": "{{device_id}} actual"
+            "legendFormat": "{{device_name}} actual"
           }
         ],
         "gridPos": {
@@ -384,8 +405,8 @@
         "type": "stat",
         "targets": [
           {
-            "expr": "ramses_zone_window_open",
-            "legendFormat": "Zone {{zone_idx}}"
+            "expr": "ramses_zone_window_open * on(zone_idx) group_left(zone_name) ramses_zone_info{zone_name=~\"$zone\"}",
+            "legendFormat": "{{zone_name}}"
           }
         ],
         "gridPos": {
@@ -530,7 +551,7 @@
         "type": "table",
         "targets": [
           {
-            "expr": "ramses_zone_mode_info == 1",
+            "expr": "ramses_zone_mode_info{zone_idx=~\".+\"} * on(zone_idx) group_left(zone_name) ramses_zone_info{zone_name=~\"$zone\"} == 1",
             "format": "table",
             "instant": true
           }
@@ -547,16 +568,16 @@
             "options": {
               "excludeByName": {
                 "Time": true,
-                "Value": true
+                "Value": true,
+                "device_id": true,
+                "zone_idx": true
               },
               "indexByName": {
-                "device_id": 0,
-                "zone_idx": 1,
-                "mode": 2
+                "zone_name": 0,
+                "mode": 1
               },
               "renameByName": {
-                "device_id": "Device ID",
-                "zone_idx": "Zone",
+                "zone_name": "Zone",
                 "mode": "Active Mode"
               }
             }
@@ -567,7 +588,7 @@
         "id": 20,
         "title": "System Information",
         "type": "text",
-        "content": "## RAMSES RF System Monitor\n\n### Metrics Available:\n- Device temperatures and setpoints\n- Heat demand per zone\n- Boiler communication health\n- Boiler setpoint and modulation\n- Zone window status\n- Zone operating modes\n- System sync cycles\n- Device activity tracking",
+        "content": "## RAMSES RF System Monitor\n\n### Metrics Available:\n- Device temperatures and setpoints\n- Heat demand per zone\n- Boiler communication health\n- Boiler setpoint and modulation\n- Zone window status\n- Zone operating modes\n- System sync cycles\n- Device activity tracking\n\n### Zone Filter\nUse the **Zone** dropdown at the top to filter data for specific zones.",
         "gridPos": {
           "h": 6,
           "w": 24,
