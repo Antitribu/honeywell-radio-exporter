@@ -1,10 +1,12 @@
 # Warning
 
-*********************
-Heavy use of vibe coding involved, this project is mostly me testing workflows around AI more than 
+______________________________________________________________________
+
+Heavy use of vibe coding involved, this project is mostly me testing workflows around AI more than
 actually delivering working code. YMMV, no warranties, not reviewed, past results do not guarantee
 future results, contact a doctor if it lasts longer than 4 hours.
-*********************
+
+______________________________________________________________________
 
 # Honeywell Radio Exporter
 
@@ -173,6 +175,23 @@ scrape_configs:
 - `ramses_message_errors_total`: Total number of message processing errors
 - `ramses_message_payload_size_bytes`: Size of message payloads
 - `ramses_device_temperature_celsius`: Temperature reading per device in Celsius
+- `ramses_device_setpoint_celsius`: Target temperature setpoint per device/zone
+- `ramses_device_info`: Device information (ID to name mapping)
+- `ramses_device_last_seen_timestamp`: Last message timestamp per device
+- `ramses_zone_window_open`: Window open state per zone (0=closed, 1=open)
+- `ramses_zone_mode_info`: Zone operating mode information
+- `ramses_heat_demand`: Heat demand per zone (0.0-1.0 = 0-100%)
+- `ramses_system_sync_remaining_seconds`: Seconds until next system sync
+- `ramses_system_sync_last_timestamp`: Last system sync message timestamp
+- `ramses_boiler_messages_sent_total`: Total messages sent to boilers
+- `ramses_boiler_messages_received_total`: Total messages received from boilers
+- `ramses_boiler_last_seen_timestamp`: Last message from boiler
+- `ramses_boiler_last_contacted_timestamp`: Last message sent to boiler
+- `ramses_boiler_setpoint_celsius`: Current boiler setpoint temperature
+- `ramses_boiler_modulation_level`: Current boiler modulation level (0.0-1.0)
+- `ramses_boiler_flame_active`: Boiler flame status (0=off, 1=on)
+- `ramses_boiler_ch_active`: Central heating active status (0=off, 1=on)
+- `ramses_boiler_dhw_active`: Domestic hot water active status (0=off, 1=on)
 - `ramses_system_info`: Information about the RAMSES RF system
 
 ## Development

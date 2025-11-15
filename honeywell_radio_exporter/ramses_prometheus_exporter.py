@@ -271,6 +271,37 @@ class RamsesPrometheusExporter:
             ["boiler_id", "boiler_name"],
         )
 
+        # Boiler setpoint and modulation metrics
+        self.boiler_setpoint = Gauge(
+            "ramses_boiler_setpoint_celsius",
+            "Current boiler setpoint temperature in Celsius",
+            ["boiler_id", "boiler_name"],
+        )
+
+        self.boiler_modulation_level = Gauge(
+            "ramses_boiler_modulation_level",
+            "Current boiler modulation level (0.0 to 1.0 representing 0-100%)",
+            ["boiler_id", "boiler_name"],
+        )
+
+        self.boiler_flame_active = Gauge(
+            "ramses_boiler_flame_active",
+            "Boiler flame status (0 = off, 1 = on)",
+            ["boiler_id", "boiler_name"],
+        )
+
+        self.boiler_ch_active = Gauge(
+            "ramses_boiler_ch_active",
+            "Central heating active status (0 = off, 1 = on)",
+            ["boiler_id", "boiler_name"],
+        )
+
+        self.boiler_dhw_active = Gauge(
+            "ramses_boiler_dhw_active",
+            "Domestic hot water active status (0 = off, 1 = on)",
+            ["boiler_id", "boiler_name"],
+        )
+
     async def start_gateway(self):
         """Start the RAMSES RF gateway."""
         try:
@@ -635,6 +666,77 @@ class RamsesPrometheusExporter:
                     )
                 except (ValueError, TypeError) as e:
                     logger.warning(f"Could not parse system sync from payload: {e}")
+
+            # Extract boiler setpoint from payload if available
+            # Boiler setpoint appears in message code 22D9 (boiler_setpoint)
+            if isinstance(msg.payload, dict) and "setpoint" in msg.payload and code == "22D9":
+                try:
+                    setpoint = float(msg.payload["setpoint"])
+                    boiler_name = self._get_device_name(source_device)
+
+                    # Update boiler setpoint metric
+                    self.boiler_setpoint.labels(
+                        boiler_id=source_device, boiler_name=boiler_name
+                    ).set(setpoint)
+
+                    logger.debug(
+                        f"Updated boiler setpoint for {source_device} ({boiler_name}): {setpoint}°C"
+                    )
+                except (ValueError, TypeError) as e:
+                    logger.warning(f"Could not parse boiler setpoint from payload: {e}")
+
+            # Extract boiler modulation and status from payload if available
+            # Boiler modulation and status appear in message codes 3EF0 and 3EF1 (actuator_state, actuator_cycle)
+            if isinstance(msg.payload, dict) and code in ("3EF0", "3EF1"):
+                try:
+                    boiler_name = self._get_device_name(source_device)
+
+                    # Modulation level (present in both 3EF0 and 3EF1)
+                    if (
+                        "modulation_level" in msg.payload
+                        and msg.payload["modulation_level"] is not None
+                    ):
+                        modulation_level = float(msg.payload["modulation_level"])
+                        self.boiler_modulation_level.labels(
+                            boiler_id=source_device, boiler_name=boiler_name
+                        ).set(modulation_level)
+                        percentage = modulation_level * 100
+                        logger.debug(
+                            f"Updated boiler modulation for {source_device} ({boiler_name}): {percentage:.1f}%"
+                        )
+
+                    # Flame status (only in 3EF0)
+                    if "flame_on" in msg.payload:
+                        flame_on = bool(msg.payload["flame_on"])
+                        self.boiler_flame_active.labels(
+                            boiler_id=source_device, boiler_name=boiler_name
+                        ).set(1 if flame_on else 0)
+                        logger.debug(
+                            f"Updated boiler flame status for {source_device} ({boiler_name}): {'ON' if flame_on else 'OFF'}"
+                        )
+
+                    # Central heating active status (only in 3EF0)
+                    if "ch_active" in msg.payload:
+                        ch_active = bool(msg.payload["ch_active"])
+                        self.boiler_ch_active.labels(
+                            boiler_id=source_device, boiler_name=boiler_name
+                        ).set(1 if ch_active else 0)
+                        logger.debug(
+                            f"Updated boiler CH status for {source_device} ({boiler_name}): {'ACTIVE' if ch_active else 'INACTIVE'}"
+                        )
+
+                    # Domestic hot water active status (only in 3EF0)
+                    if "dhw_active" in msg.payload:
+                        dhw_active = bool(msg.payload["dhw_active"])
+                        self.boiler_dhw_active.labels(
+                            boiler_id=source_device, boiler_name=boiler_name
+                        ).set(1 if dhw_active else 0)
+                        logger.debug(
+                            f"Updated boiler DHW status for {source_device} ({boiler_name}): {'ACTIVE' if dhw_active else 'INACTIVE'}"
+                        )
+
+                except (ValueError, TypeError, KeyError) as e:
+                    logger.warning(f"Could not parse boiler modulation/status from payload: {e}")
 
         # Update active devices count
         if self.gateway and hasattr(self.gateway, "devices"):

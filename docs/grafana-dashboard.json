@@ -567,12 +567,245 @@
         "id": 20,
         "title": "System Information",
         "type": "text",
-        "content": "## RAMSES RF System Monitor\n\n### Metrics Available:\n- Device temperatures and setpoints\n- Heat demand per zone\n- Boiler communication health\n- Zone window status\n- Zone operating modes\n- System sync cycles\n- Device activity tracking",
+        "content": "## RAMSES RF System Monitor\n\n### Metrics Available:\n- Device temperatures and setpoints\n- Heat demand per zone\n- Boiler communication health\n- Boiler setpoint and modulation\n- Zone window status\n- Zone operating modes\n- System sync cycles\n- Device activity tracking",
         "gridPos": {
           "h": 6,
           "w": 24,
           "x": 0,
           "y": 62
+        }
+      },
+      {
+        "id": 21,
+        "title": "Boiler Setpoint",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "ramses_boiler_setpoint_celsius",
+            "legendFormat": "{{boiler_name}} ({{boiler_id}})"
+          }
+        ],
+        "gridPos": {
+          "h": 6,
+          "w": 6,
+          "x": 0,
+          "y": 68
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "celsius",
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "blue",
+                  "value": null
+                },
+                {
+                  "color": "green",
+                  "value": 40
+                },
+                {
+                  "color": "orange",
+                  "value": 60
+                },
+                {
+                  "color": "red",
+                  "value": 80
+                }
+              ]
+            }
+          }
+        },
+        "options": {
+          "colorMode": "background",
+          "graphMode": "area",
+          "justifyMode": "center",
+          "orientation": "auto",
+          "reduceOptions": {
+            "values": false,
+            "calcs": ["lastNotNull"],
+            "fields": ""
+          }
+        }
+      },
+      {
+        "id": 22,
+        "title": "Boiler Modulation Level",
+        "type": "gauge",
+        "targets": [
+          {
+            "expr": "ramses_boiler_modulation_level * 100",
+            "legendFormat": "{{boiler_name}}"
+          }
+        ],
+        "gridPos": {
+          "h": 6,
+          "w": 6,
+          "x": 6,
+          "y": 68
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percent",
+            "min": 0,
+            "max": 100,
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "blue",
+                  "value": null
+                },
+                {
+                  "color": "green",
+                  "value": 20
+                },
+                {
+                  "color": "yellow",
+                  "value": 50
+                },
+                {
+                  "color": "orange",
+                  "value": 75
+                },
+                {
+                  "color": "red",
+                  "value": 90
+                }
+              ]
+            }
+          }
+        },
+        "options": {
+          "showThresholdLabels": false,
+          "showThresholdMarkers": true,
+          "orientation": "auto",
+          "reduceOptions": {
+            "values": false,
+            "calcs": ["lastNotNull"],
+            "fields": ""
+          }
+        }
+      },
+      {
+        "id": 23,
+        "title": "Boiler Status",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "ramses_boiler_flame_active",
+            "legendFormat": "Flame"
+          },
+          {
+            "expr": "ramses_boiler_ch_active",
+            "legendFormat": "Central Heating"
+          },
+          {
+            "expr": "ramses_boiler_dhw_active",
+            "legendFormat": "Hot Water"
+          }
+        ],
+        "gridPos": {
+          "h": 6,
+          "w": 6,
+          "x": 12,
+          "y": 68
+        },
+        "fieldConfig": {
+          "defaults": {
+            "mappings": [
+              {
+                "type": "value",
+                "options": {
+                  "0": {
+                    "text": "OFF",
+                    "color": "semi-dark-blue"
+                  },
+                  "1": {
+                    "text": "ON",
+                    "color": "semi-dark-orange"
+                  }
+                }
+              }
+            ],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "semi-dark-blue",
+                  "value": null
+                },
+                {
+                  "color": "semi-dark-orange",
+                  "value": 1
+                }
+              ]
+            }
+          }
+        },
+        "options": {
+          "colorMode": "background",
+          "graphMode": "none",
+          "justifyMode": "center",
+          "orientation": "auto",
+          "reduceOptions": {
+            "values": false,
+            "calcs": ["lastNotNull"],
+            "fields": ""
+          }
+        }
+      },
+      {
+        "id": 24,
+        "title": "Boiler Setpoint & Modulation History",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "ramses_boiler_setpoint_celsius",
+            "legendFormat": "Setpoint - {{boiler_name}}",
+            "yAxisIndex": 0
+          },
+          {
+            "expr": "ramses_boiler_modulation_level * 100",
+            "legendFormat": "Modulation - {{boiler_name}}",
+            "yAxisIndex": 1
+          }
+        ],
+        "gridPos": {
+          "h": 6,
+          "w": 6,
+          "x": 18,
+          "y": 68
+        },
+        "yaxes": [
+          {
+            "format": "celsius",
+            "label": "Setpoint (°C)",
+            "show": true
+          },
+          {
+            "format": "percent",
+            "label": "Modulation (%)",
+            "show": true,
+            "min": 0,
+            "max": 100
+          }
+        ],
+        "xaxis": {
+          "mode": "time",
+          "show": true
+        },
+        "legend": {
+          "show": true,
+          "alignAsTable": false,
+          "avg": false,
+          "current": true,
+          "max": false,
+          "min": false,
+          "rightSide": false,
+          "total": false,
+          "values": true
         }
       }
     ],
