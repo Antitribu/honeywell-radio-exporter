@@ -215,7 +215,11 @@ class GrafanaDashboardUploader:
         return deleted_count
 
     def upload_dashboard(
-        self, dashboard_path: Path, datasource_uid: str = None, folder_id: int = 0
+        self,
+        dashboard_path: Path,
+        datasource_uid: str = None,
+        folder_id: int = 0,
+        existing_uid: str = None,
     ) -> bool:
         """
         Upload dashboard to Grafana.
@@ -224,6 +228,7 @@ class GrafanaDashboardUploader:
             dashboard_path: Path to dashboard JSON file
             datasource_uid: UID of the Prometheus datasource (optional)
             folder_id: Folder ID to upload to (0 = General, default)
+            existing_uid: UID of existing dashboard to update (optional)
 
         Returns:
             True if successful, False otherwise
@@ -245,8 +250,15 @@ class GrafanaDashboardUploader:
         else:
             dashboard = dashboard_data
 
-        # Remove id to allow Grafana to assign a new one
-        dashboard["id"] = None
+        # If updating existing dashboard, preserve its UID
+        if existing_uid:
+            print(f"📝 Updating existing dashboard (UID: {existing_uid})")
+            dashboard["uid"] = existing_uid
+            dashboard["id"] = None  # Let Grafana set the ID
+        else:
+            # Remove id and uid to allow Grafana to assign new ones
+            dashboard["id"] = None
+            dashboard["uid"] = None
 
         # Update datasource if provided
         if datasource_uid:
@@ -288,7 +300,8 @@ class GrafanaDashboardUploader:
                     return False
 
                 dashboard_url = f"{self.grafana_url}{result.get('url', '')}"
-                print(f"\n✅ Dashboard uploaded successfully!")
+                action = "updated" if existing_uid else "uploaded"
+                print(f"\n✅ Dashboard {action} successfully!")
                 print(f"📊 Dashboard URL: {dashboard_url}")
                 print(f"🆔 Dashboard UID: {result.get('uid', 'N/A')}")
                 print(f"🆔 Dashboard ID: {result.get('id', 'N/A')}")
@@ -502,24 +515,48 @@ Grafana API Key Creation:
         else:
             print("⚠️  Could not fetch datasources")
 
-    # Delete existing dashboards with the same title (unless --no-delete specified)
-    if not args.no_delete:
-        # Read dashboard to get title
-        try:
-            with open(args.dashboard, "r") as f:
-                dashboard_data = json.load(f)
-            dashboard_title = dashboard_data.get("dashboard", {}).get("title")
-            if dashboard_title:
-                deleted_count = uploader.delete_dashboards_by_title(dashboard_title)
-                if deleted_count > 0:
-                    print(f"\n✅ Deleted {deleted_count} existing dashboard(s)")
-        except Exception as e:
-            print(f"\n⚠️  Could not delete existing dashboards: {e}")
+    # Check for existing dashboard with the same title
+    existing_uid = None
+    try:
+        with open(args.dashboard, "r") as f:
+            dashboard_data = json.load(f)
+        dashboard_title = dashboard_data.get("dashboard", {}).get("title")
 
-    # Upload dashboard
-    print("\n📤 Uploading dashboard...")
+        if dashboard_title:
+            print(f"\n🔍 Checking for existing dashboard: {dashboard_title}")
+            existing_dashboards = uploader.search_dashboards(query=dashboard_title)
+            matching = [d for d in existing_dashboards if d.get("title") == dashboard_title]
+
+            if matching:
+                # Update the first matching dashboard
+                existing_uid = matching[0].get("uid")
+                print(f"   Found existing dashboard (UID: {existing_uid})")
+
+                # Delete any additional duplicates
+                if len(matching) > 1 and not args.no_delete:
+                    print(f"   Found {len(matching) - 1} duplicate(s), cleaning up...")
+                    for dash in matching[1:]:
+                        uid = dash.get("uid")
+                        if uid:
+                            print(f"   🗑️  Deleting duplicate: {dash.get('title')} (UID: {uid})")
+                            if uploader.delete_dashboard(uid):
+                                print(f"      ✅ Deleted successfully")
+            else:
+                print("   No existing dashboard found, will create new one")
+    except Exception as e:
+        print(f"\n⚠️  Could not check for existing dashboard: {e}")
+
+    # Upload/update dashboard
+    if existing_uid:
+        print("\n📤 Updating dashboard...")
+    else:
+        print("\n📤 Creating new dashboard...")
+
     success = uploader.upload_dashboard(
-        dashboard_path=args.dashboard, datasource_uid=datasource_uid, folder_id=args.folder_id
+        dashboard_path=args.dashboard,
+        datasource_uid=datasource_uid,
+        folder_id=args.folder_id,
+        existing_uid=existing_uid,
     )
 
     if success:
