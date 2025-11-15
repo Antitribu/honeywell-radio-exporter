@@ -662,7 +662,7 @@
 ||  18:147744 |  01:234576 | RQ | zone_name        |  0A  || {}
 ||  01:234576 |  18:147744 | RP | zone_name        |  0A  || {'zone_idx': '0A', 'name': 'Office'}
 ||  18:147744 |  01:234576 | RQ | zone_name        |  04  || {}
-||  01:234576 |  18:147744 | RP | zone_name        |  04  || {'zone_idx': '04', 'name': 'Caolans Room'}
+||  01:234576 |  18:147744 | RP | zone_name        |  04  || {'zone_idx': '04', 'name': 'Bedroom 4'}
 ||  18:147744 |  01:234576 | RQ | zone_params      |  08  || {'zone_idx': '08'}
 ||  01:234576 |  18:147744 | RP | zone_params      |  08  || {'zone_idx': '08', 'min_temp': 5.0, 'max_temp': 35.0, 'local_override': True, 'openwindow_function': True, 'multiroom_mode': False, '_unknown_bitmap': '0b00010000'}
 ||  18:147744 |  01:234576 | RQ | zone_name        |  08  || {}
@@ -870,7 +870,7 @@
 ||  18:147744 |  01:234576 | RQ | zone_params      |  07  || {'zone_idx': '07'}
 ||  01:234576 |  18:147744 | RP | zone_params      |  07  || {'zone_idx': '07', 'min_temp': 5.0, 'max_temp': 35.0, 'local_override': True, 'openwindow_function': True, 'multiroom_mode': False, '_unknown_bitmap': '0b00010000'}
 ||  18:147744 |  01:234576 | RQ | zone_name        |  04  || {}
-||  01:234576 |  18:147744 | RP | zone_name        |  04  || {'zone_idx': '04', 'name': 'Caolans Room'}
+||  01:234576 |  18:147744 | RP | zone_name        |  04  || {'zone_idx': '04', 'name': 'Bedroom 4'}
 ||  18:147744 |  01:234576 | RQ | zone_params      |  02  || {'zone_idx': '02'}
 ||  01:234576 |  18:147744 | RP | zone_params      |  02  || {'zone_idx': '02', 'min_temp': 5.0, 'max_temp': 35.0, 'local_override': True, 'openwindow_function': True, 'multiroom_mode': False, '_unknown_bitmap': '0b00010000'}
 ||  18:147744 |  01:234576 | RQ | zone_name        |  07  || {}
@@ -1197,7 +1197,7 @@
 ||  18:147744 |  01:234576 | RQ | zone_params      |  04  || {'zone_idx': '04'}
 ||  01:234576 |  18:147744 | RP | zone_params      |  04  || {'zone_idx': '04', 'min_temp': 5.0, 'max_temp': 35.0, 'local_override': True, 'openwindow_function': True, 'multiroom_mode': False, '_unknown_bitmap': '0b00010000'}
 ||  18:147744 |  01:234576 | RQ | zone_name        |  04  || {}
-||  01:234576 |  18:147744 | RP | zone_name        |  04  || {'zone_idx': '04', 'name': 'Caolans Room'}
+||  01:234576 |  18:147744 | RP | zone_name        |  04  || {'zone_idx': '04', 'name': 'Bedroom 4'}
 ||  18:147744 |  01:234576 | RQ | zone_params      |  09  || {'zone_idx': '09'}
 ||  01:234576 |  18:147744 | RP | zone_params      |  09  || {'zone_idx': '09', 'min_temp': 5.0, 'max_temp': 35.0, 'local_override': True, 'openwindow_function': True, 'multiroom_mode': False, '_unknown_bitmap': '0b00010000'}
 ||  18:147744 |  01:234576 | RQ | zone_name        |  09  || {}
@@ -1322,7 +1322,7 @@
 ||  18:147744 |  01:234576 | RQ | system_mode      |      || {}
 ||  01:234576 |  18:147744 | RP | system_mode      |      || {'system_mode': 'auto'}
 ||  18:147744 |  01:234576 | RQ | zone_name        |  04  || {}
-||  01:234576 |  18:147744 | RP | zone_name        |  04  || {'zone_idx': '04', 'name': 'Caolans Room'}
+||  01:234576 |  18:147744 | RP | zone_name        |  04  || {'zone_idx': '04', 'name': 'Bedroom 4'}
 ||  18:147744 |  01:234576 | RQ | zone_params      |  03  || {'zone_idx': '03'}
 ||  01:234576 |  18:147744 | RP | zone_params      |  03  || {'zone_idx': '03', 'min_temp': 5.0, 'max_temp': 35.0, 'local_override': True, 'openwindow_function': True, 'multiroom_mode': False, '_unknown_bitmap': '0b00010000'}
 ||  18:147744 |  01:234576 | RQ | zone_params      |  05  || {'zone_idx': '05'}
@@ -1469,7 +1469,7 @@
 ||  18:147744 |  01:234576 | RQ | zone_params      |  06  || {'zone_idx': '06'}
 ||  01:234576 |  18:147744 | RP | zone_params      |  06  || {'zone_idx': '06', 'min_temp': 5.0, 'max_temp': 35.0, 'local_override': True, 'openwindow_function': True, 'multiroom_mode': False, '_unknown_bitmap': '0b00010000'}
 ||  18:147744 |  01:234576 | RQ | zone_name        |  04  || {}
-||  01:234576 |  18:147744 | RP | zone_name        |  04  || {'zone_idx': '04', 'name': 'Caolans Room'}
+||  01:234576 |  18:147744 | RP | zone_name        |  04  || {'zone_idx': '04', 'name': 'Bedroom 4'}
 ||  18:147744 |  01:234576 | RQ | zone_mode        |  08  || {'zone_idx': '08'}
 ||  01:234576 |  18:147744 | RP | zone_mode        |  08  || {'zone_idx': '08', 'mode': 'follow_schedule', 'setpoint': 6.0}
 ||  18:147744 |  01:234576 | RQ | zone_name        |  01  || {}
@@ -1669,7 +1669,7 @@
 ||  01:234576 |            |  I | relay_demand     |  FA  || {'domain_id': 'FA', 'relay_demand': 0.0}
 ||  01:234576 |            |  I | relay_demand     |  F9  || {'domain_id': 'F9', 'relay_demand': 0.13}
 ||  18:147744 |  01:234576 | RQ | zone_name        |  04  || {}
-||  01:234576 |  18:147744 | RP | zone_name        |  04  || {'zone_idx': '04', 'name': 'Caolans Room'}
+||  01:234576 |  18:147744 | RP | zone_name        |  04  || {'zone_idx': '04', 'name': 'Bedroom 4'}
 ||  18:147744 |  01:234576 | RQ | zone_params      |  07  || {'zone_idx': '07'}
 ||  01:234576 |  18:147744 | RP | zone_params      |  07  || {'zone_idx': '07', 'min_temp': 5.0, 'max_temp': 35.0, 'local_override': True, 'openwindow_function': True, 'multiroom_mode': False, '_unknown_bitmap': '0b00010000'}
 ||  18:147744 |  01:234576 | RQ | zone_mode        |  06  || {'zone_idx': '06'}
@@ -1924,7 +1924,7 @@
 ||  18:147744 |  01:234576 | RQ | zone_mode        |  07  || {'zone_idx': '07'}
 ||  01:234576 |  18:147744 | RP | zone_mode        |  07  || {'zone_idx': '07', 'mode': 'follow_schedule', 'setpoint': 5.0}
 ||  18:147744 |  01:234576 | RQ | zone_name        |  04  || {}
-||  01:234576 |  18:147744 | RP | zone_name        |  04  || {'zone_idx': '04', 'name': 'Caolans Room'}
+||  01:234576 |  18:147744 | RP | zone_name        |  04  || {'zone_idx': '04', 'name': 'Bedroom 4'}
 ||  18:147744 |  01:234576 | RQ | zone_mode        |  04  || {'zone_idx': '04'}
 ||  01:234576 |  18:147744 | RP | zone_mode        |  04  || {'zone_idx': '04', 'mode': 'follow_schedule', 'setpoint': 18.0}
 ||  18:147744 |  01:234576 | RQ | zone_params      |  03  || {'zone_idx': '03'}
@@ -2201,7 +2201,7 @@
 ||  18:147744 |  01:234576 | RQ | zone_params      |  04  || {'zone_idx': '04'}
 ||  01:234576 |  18:147744 | RP | zone_params      |  04  || {'zone_idx': '04', 'min_temp': 5.0, 'max_temp': 35.0, 'local_override': True, 'openwindow_function': True, 'multiroom_mode': False, '_unknown_bitmap': '0b00010000'}
 ||  18:147744 |  01:234576 | RQ | zone_name        |  04  || {}
-||  01:234576 |  18:147744 | RP | zone_name        |  04  || {'zone_idx': '04', 'name': 'Caolans Room'}
+||  01:234576 |  18:147744 | RP | zone_name        |  04  || {'zone_idx': '04', 'name': 'Bedroom 4'}
 ||  18:147744 |  01:234576 | RQ | zone_params      |  00  || {'zone_idx': '00'}
 ||  01:234576 |  18:147744 | RP | zone_params      |  00  || {'zone_idx': '00', 'min_temp': 5.0, 'max_temp': 35.0, 'local_override': True, 'openwindow_function': True, 'multiroom_mode': False, '_unknown_bitmap': '0b00010000'}
 ||  18:147744 |  01:234576 | RQ | zone_name        |  00  || {}
@@ -2334,7 +2334,7 @@
 ||  04:122290 |            |  I | temperature      |      || {'temperature': 11.93}
 ||  04:122840 |  01:234576 |  I | setpoint         |  04  || {'zone_idx': '04', 'setpoint': 18.0}
 ||  18:147744 |  01:234576 | RQ | zone_name        |  04  || {}
-||  01:234576 |  18:147744 | RP | zone_name        |  04  || {'zone_idx': '04', 'name': 'Caolans Room'}
+||  01:234576 |  18:147744 | RP | zone_name        |  04  || {'zone_idx': '04', 'name': 'Bedroom 4'}
 ||  18:147744 |  01:234576 | RQ | zone_params      |  00  || {'zone_idx': '00'}
 ||  01:234576 |  18:147744 | RP | zone_params      |  00  || {'zone_idx': '00', 'min_temp': 5.0, 'max_temp': 35.0, 'local_override': True, 'openwindow_function': True, 'multiroom_mode': False, '_unknown_bitmap': '0b00010000'}
 ||  18:147744 |  01:234576 | RQ | zone_params      |  08  || {'zone_idx': '08'}
@@ -2825,7 +2825,7 @@
 ||  18:147744 |  01:234576 | RQ | zone_mode        |  06  || {'zone_idx': '06'}
 ||  01:234576 |  18:147744 | RP | zone_mode        |  06  || {'zone_idx': '06', 'mode': 'follow_schedule', 'setpoint': 18.0}
 ||  18:147744 |  01:234576 | RQ | zone_name        |  04  || {}
-||  01:234576 |  18:147744 | RP | zone_name        |  04  || {'zone_idx': '04', 'name': 'Caolans Room'}
+||  01:234576 |  18:147744 | RP | zone_name        |  04  || {'zone_idx': '04', 'name': 'Bedroom 4'}
 ||  18:147744 |  01:234576 | RQ | zone_mode        |  04  || {'zone_idx': '04'}
 ||  01:234576 |  18:147744 | RP | zone_mode        |  04  || {'zone_idx': '04', 'mode': 'follow_schedule', 'setpoint': 18.0}
 ||  18:147744 |  01:234576 | RQ | zone_name        |  02  || {}
@@ -3004,7 +3004,7 @@
 ||  18:147744 |  01:234576 | RQ | zone_name        |  00  || {}
 ||  01:234576 |  18:147744 | RP | zone_name        |  00  || {'zone_idx': '00', 'name': 'Living Room'}
 ||  18:147744 |  01:234576 | RQ | zone_name        |  04  || {}
-||  01:234576 |  18:147744 | RP | zone_name        |  04  || {'zone_idx': '04', 'name': 'Caolans Room'}
+||  01:234576 |  18:147744 | RP | zone_name        |  04  || {'zone_idx': '04', 'name': 'Bedroom 4'}
 ||  18:147744 |  01:234576 | RQ | zone_name        |  02  || {}
 ||  01:234576 |  18:147744 | RP | zone_name        |  02  || {'zone_idx': '02', 'name': 'Kitchen'}
 ||  18:147744 |  01:234576 | RQ | zone_name        |  07  || {}
@@ -3245,7 +3245,7 @@
 ||  01:234576 |  18:147744 | RP | zone_params      |  00  || {'zone_idx': '00', 'min_temp': 5.0, 'max_temp': 35.0, 'local_override': True, 'openwindow_function': True, 'multiroom_mode': False, '_unknown_bitmap': '0b00010000'}
 ||  01:234576 |  18:147744 | RP | zone_params      |  04  || {'zone_idx': '04', 'min_temp': 5.0, 'max_temp': 35.0, 'local_override': True, 'openwindow_function': True, 'multiroom_mode': False, '_unknown_bitmap': '0b00010000'}
 ||  18:147744 |  01:234576 | RQ | zone_name        |  04  || {}
-||  01:234576 |  18:147744 | RP | zone_name        |  04  || {'zone_idx': '04', 'name': 'Caolans Room'}
+||  01:234576 |  18:147744 | RP | zone_name        |  04  || {'zone_idx': '04', 'name': 'Bedroom 4'}
 ||  18:147744 |  01:234576 | RQ | zone_params      |  01  || {'zone_idx': '01'}
 ||  01:234576 |  18:147744 | RP | zone_params      |  01  || {'zone_idx': '01', 'min_temp': 5.0, 'max_temp': 35.0, 'local_override': True, 'openwindow_function': True, 'multiroom_mode': False, '_unknown_bitmap': '0b00010000'}
 ||  18:147744 |  13:243590 | RQ | actuator_cycle   |      || {}
@@ -3414,7 +3414,7 @@
 ||  18:147744 |  01:234576 | RQ | zone_params      |  04  || {'zone_idx': '04'}
 ||  01:234576 |  18:147744 | RP | zone_params      |  04  || {'zone_idx': '04', 'min_temp': 5.0, 'max_temp': 35.0, 'local_override': True, 'openwindow_function': True, 'multiroom_mode': False, '_unknown_bitmap': '0b00010000'}
 ||  18:147744 |  01:234576 | RQ | zone_name        |  04  || {}
-||  01:234576 |  18:147744 | RP | zone_name        |  04  || {'zone_idx': '04', 'name': 'Caolans Room'}
+||  01:234576 |  18:147744 | RP | zone_name        |  04  || {'zone_idx': '04', 'name': 'Bedroom 4'}
 ||  18:147744 |  01:234576 | RQ | zone_params      |  06  || {'zone_idx': '06'}
 ||  01:234576 |  18:147744 | RP | zone_params      |  06  || {'zone_idx': '06', 'min_temp': 5.0, 'max_temp': 35.0, 'local_override': True, 'openwindow_function': True, 'multiroom_mode': False, '_unknown_bitmap': '0b00010000'}
 ||  18:147744 |  01:234576 | RQ | zone_mode        |  06  || {'zone_idx': '06'}
@@ -3593,7 +3593,7 @@
 ||  18:147744 |  01:234576 | RQ | zone_mode        |  08  || {'zone_idx': '08'}
 ||  01:234576 |  18:147744 | RP | zone_mode        |  08  || {'zone_idx': '08', 'mode': 'follow_schedule', 'setpoint': 6.0}
 ||  18:147744 |  01:234576 | RQ | zone_name        |  04  || {}
-||  01:234576 |  18:147744 | RP | zone_name        |  04  || {'zone_idx': '04', 'name': 'Caolans Room'}
+||  01:234576 |  18:147744 | RP | zone_name        |  04  || {'zone_idx': '04', 'name': 'Bedroom 4'}
 ||  18:147744 |  01:234576 | RQ | zone_params      |  06  || {'zone_idx': '06'}
 ||  01:234576 |  18:147744 | RP | zone_params      |  06  || {'zone_idx': '06', 'min_temp': 5.0, 'max_temp': 35.0, 'local_override': True, 'openwindow_function': True, 'multiroom_mode': False, '_unknown_bitmap': '0b00010000'}
 ||  18:147744 |  01:234576 | RQ | zone_params      |  01  || {'zone_idx': '01'}
@@ -4013,7 +4013,7 @@
 ||  18:147744 |  01:234576 | RQ | zone_name        |  07  || {}
 ||  01:234576 |  18:147744 | RP | zone_name        |  07  || {'zone_idx': '07', 'name': 'Bathroom 2'}
 ||  18:147744 |  01:234576 | RQ | zone_name        |  04  || {}
-||  01:234576 |  18:147744 | RP | zone_name        |  04  || {'zone_idx': '04', 'name': 'Caolans Room'}
+||  01:234576 |  18:147744 | RP | zone_name        |  04  || {'zone_idx': '04', 'name': 'Bedroom 4'}
 ||  18:147744 |  01:234576 | RQ | zone_params      |  09  || {'zone_idx': '09'}
 ||  01:234576 |  18:147744 | RP | zone_params      |  09  || {'zone_idx': '09', 'min_temp': 5.0, 'max_temp': 35.0, 'local_override': True, 'openwindow_function': True, 'multiroom_mode': False, '_unknown_bitmap': '0b00010000'}
 ||  18:147744 |  01:234576 | RQ | zone_name        |  00  || {}
@@ -4407,7 +4407,7 @@
 ||  18:147744 |  01:234576 | RQ | zone_params      |  02  || {'zone_idx': '02'}
 ||  01:234576 |  18:147744 | RP | zone_params      |  02  || {'zone_idx': '02', 'min_temp': 5.0, 'max_temp': 35.0, 'local_override': True, 'openwindow_function': True, 'multiroom_mode': False, '_unknown_bitmap': '0b00010000'}
 ||  18:147744 |  01:234576 | RQ | zone_name        |  04  || {}
-||  01:234576 |  18:147744 | RP | zone_name        |  04  || {'zone_idx': '04', 'name': 'Caolans Room'}
+||  01:234576 |  18:147744 | RP | zone_name        |  04  || {'zone_idx': '04', 'name': 'Bedroom 4'}
 ||  18:147744 |  01:234576 | RQ | zone_mode        |  03  || {'zone_idx': '03'}
 ||  01:234576 |  18:147744 | RP | zone_mode        |  03  || {'zone_idx': '03', 'mode': 'follow_schedule', 'setpoint': 5.0}
 ||  18:147744 |  01:234576 | RQ | zone_name        |  08  || {}
@@ -4628,7 +4628,7 @@
 ||  18:147744 |  01:234576 | RQ | zone_params      |  04  || {'zone_idx': '04'}
 ||  01:234576 |  18:147744 | RP | zone_params      |  04  || {'zone_idx': '04', 'min_temp': 5.0, 'max_temp': 35.0, 'local_override': True, 'openwindow_function': True, 'multiroom_mode': False, '_unknown_bitmap': '0b00010000'}
 ||  18:147744 |  01:234576 | RQ | zone_name        |  04  || {}
-||  01:234576 |  18:147744 | RP | zone_name        |  04  || {'zone_idx': '04', 'name': 'Caolans Room'}
+||  01:234576 |  18:147744 | RP | zone_name        |  04  || {'zone_idx': '04', 'name': 'Bedroom 4'}
 ||  18:147744 |  01:234576 | RQ | zone_name        |  0A  || {}
 ||  01:234576 |  18:147744 | RP | zone_name        |  0A  || {'zone_idx': '0A', 'name': 'Office'}
 ||  18:147744 |  01:234576 | RQ | zone_params      |  05  || {'zone_idx': '05'}
@@ -4776,7 +4776,7 @@
 ||  18:147744 |  01:234576 | RQ | zone_params      |  01  || {'zone_idx': '01'}
 ||  01:234576 |  18:147744 | RP | zone_params      |  01  || {'zone_idx': '01', 'min_temp': 5.0, 'max_temp': 35.0, 'local_override': True, 'openwindow_function': True, 'multiroom_mode': False, '_unknown_bitmap': '0b00010000'}
 ||  18:147744 |  01:234576 | RQ | zone_name        |  04  || {}
-||  01:234576 |  18:147744 | RP | zone_name        |  04  || {'zone_idx': '04', 'name': 'Caolans Room'}
+||  01:234576 |  18:147744 | RP | zone_name        |  04  || {'zone_idx': '04', 'name': 'Bedroom 4'}
 ||  18:147744 |  01:234576 | RQ | zone_mode        |  08  || {'zone_idx': '08'}
 ||  01:234576 |  18:147744 | RP | zone_mode        |  08  || {'zone_idx': '08', 'mode': 'follow_schedule', 'setpoint': 6.0}
 ||  18:147744 |  01:234576 | RQ | zone_name        |  03  || {}
@@ -5032,7 +5032,7 @@
 ||  18:147744 |  01:234576 | RQ | zone_name        |  08  || {}
 ||  01:234576 |  18:147744 | RP | zone_name        |  08  || {'zone_idx': '08', 'name': 'Bedroom 2'}
 ||  18:147744 |  01:234576 | RQ | zone_name        |  04  || {}
-||  01:234576 |  18:147744 | RP | zone_name        |  04  || {'zone_idx': '04', 'name': 'Caolans Room'}
+||  01:234576 |  18:147744 | RP | zone_name        |  04  || {'zone_idx': '04', 'name': 'Bedroom 4'}
 ||  18:147744 |  01:234576 | RQ | zone_name        |  05  || {}
 ||  01:234576 |  18:147744 | RP | zone_name        |  05  || {'zone_idx': '05', 'name': 'Master Bedroom'}
 ||  18:147744 |  01:234576 | RQ | zone_params      |  00  || {'zone_idx': '00'}
@@ -5646,7 +5646,7 @@
 ||  18:147744 |  01:234576 | RQ | zone_name        |  03  || {}
 ||  01:234576 |  18:147744 | RP | zone_name        |  03  || {'zone_idx': '03', 'name': 'Hallway'}
 ||  18:147744 |  01:234576 | RQ | zone_name        |  04  || {}
-||  01:234576 |  18:147744 | RP | zone_name        |  04  || {'zone_idx': '04', 'name': 'Caolans Room'}
+||  01:234576 |  18:147744 | RP | zone_name        |  04  || {'zone_idx': '04', 'name': 'Bedroom 4'}
 ||  18:147744 |  01:234576 | RQ | zone_mode        |  0A  || {'zone_idx': '0A'}
 ||  01:234576 |  18:147744 | RP | zone_mode        |  0A  || {'zone_idx': '0A', 'mode': 'follow_schedule', 'setpoint': 5.0}
 ||  18:147744 |  01:234576 | RQ | zone_params      |  08  || {'zone_idx': '08'}
