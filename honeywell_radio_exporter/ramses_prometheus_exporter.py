@@ -7,12 +7,14 @@ It tracks message types, device communications, and system state.
 """
 
 import asyncio
+import json
 import logging
 import logging.handlers
 import os
 import sys
 import time
 from collections import defaultdict
+from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, Optional
 
@@ -112,10 +114,22 @@ logger = logging.getLogger(__name__)
 class RamsesPrometheusExporter:
     """Prometheus exporter for RAMSES RF messages."""
 
-    def __init__(self, port: int = 8000, ramses_port: Optional[str] = None):
+    def __init__(self, port: int = 8000, ramses_port: Optional[str] = None, cache_file: Optional[str] = None):
         self.port = port
         self.ramses_port = ramses_port
         self.gateway: Optional[Gateway] = None
+
+        # Cache file for persisting zone and device names
+        self.cache_file = Path(cache_file) if cache_file else Path("/tmp/ramses_rf_cache.json")
+        
+        # Cache data structures
+        # Structure: {zone_idx: {"name": zone_name, "last_seen": timestamp}}
+        self.zone_name_cache: Dict[str, Dict[str, Any]] = {}
+        # Structure: {device_id: {"name": device_name, "last_seen": timestamp}}
+        self.device_name_cache: Dict[str, Dict[str, Any]] = {}
+        
+        # Load cache from disk if available
+        self._load_cache()
 
         # Prometheus metrics
         self._setup_metrics()
@@ -124,6 +138,10 @@ class RamsesPrometheusExporter:
         self.message_types = defaultdict(int)
         self.device_communications = defaultdict(int)
         self.last_message_time = time.time()
+        
+        # Zone to device mapping tracking from zone_devices messages
+        # Structure: {zone_idx: {device_role: [device_ids]}}
+        self.zone_devices_map = defaultdict(lambda: defaultdict(list))
 
     def _setup_metrics(self):
         """Initialize Prometheus metrics."""
@@ -132,7 +150,7 @@ class RamsesPrometheusExporter:
         self.messages_total = Counter(
             "ramses_messages_total",
             "Total number of RAMSES messages received",
-            ["message_type", "verb", "code", "source_device", "destination_device"],
+            ["message_type", "verb", "code", "source_device", "destination_device", "zone_name"],
         )
 
         self.message_types_counter = Counter(
@@ -176,6 +194,25 @@ class RamsesPrometheusExporter:
             ["error_type"],
         )
 
+        # System fault tracking
+        self.comms_fault_total = Counter(
+            "ramses_comms_fault_total",
+            "Total number of communications faults detected",
+            ["device_id", "device_type", "zone_idx", "event_type"],
+        )
+
+        self.comms_fault_state = Gauge(
+            "ramses_comms_fault_state",
+            "Current communications fault state (0=ok, 1=fault)",
+            ["device_id", "device_type", "zone_idx"],
+        )
+
+        self.comms_fault_last_timestamp = Gauge(
+            "ramses_comms_fault_last_timestamp",
+            "Unix timestamp of the last communications fault event",
+            ["device_id", "device_type", "zone_idx", "event_type"],
+        )
+
         # Message payload size
         self.message_payload_size = Histogram(
             "ramses_message_payload_size_bytes",
@@ -187,70 +224,56 @@ class RamsesPrometheusExporter:
         self.device_temperature = Gauge(
             "ramses_device_temperature_celsius",
             "Temperature reading per device in Celsius",
-            ["device_id"],
-        )
-
-        # Device info metric - maps device_id to device_name
-        self.device_info = Gauge(
-            "ramses_device_info",
-            "Device information mapping device ID to device name (always 1)",
-            ["device_id", "device_name"],
-        )
-
-        # Zone info metric - maps zone_idx to zone_name
-        self.zone_info = Gauge(
-            "ramses_zone_info",
-            "Zone information mapping zone index to zone name (always 1)",
-            ["zone_idx", "zone_name"],
+            ["device_id", "device_name", "zone_name"],
         )
 
         # Device last seen gauge
         self.device_last_seen = Gauge(
             "ramses_device_last_seen_timestamp",
             "Unix timestamp of the last message received from each device",
-            ["device_id"],
+            ["device_id", "device_name", "zone_name"],
         )
 
         # Device setpoint (target temperature) gauge
         self.device_setpoint = Gauge(
             "ramses_device_setpoint_celsius",
             "Target temperature setpoint per device or zone in Celsius",
-            ["device_id", "zone_idx"],
+            ["device_id", "device_name", "zone_idx", "zone_name"],
         )
 
         # Zone window state gauge (0 = closed, 1 = open)
         self.zone_window_open = Gauge(
             "ramses_zone_window_open",
             "Window open state per zone (0 = closed, 1 = open)",
-            ["device_id", "zone_idx"],
+            ["device_id", "device_name", "zone_idx", "zone_name"],
         )
 
         # Zone mode info gauge (always 1, mode as label)
         self.zone_mode = Gauge(
             "ramses_zone_mode_info",
             "Zone mode information (always 1, mode as label)",
-            ["device_id", "zone_idx", "mode"],
+            ["device_id", "device_name", "zone_idx", "zone_name", "mode"],
         )
 
         # Zone/device heat demand gauge (0.0 to 1.0, representing 0-100%)
         self.heat_demand = Gauge(
             "ramses_heat_demand",
             "Heat demand per zone or system (0.0 to 1.0 representing 0-100%)",
-            ["device_id", "zone_idx"],
+            ["device_id", "device_name", "zone_idx", "zone_name"],
         )
 
         # System sync gauge - seconds until next sync
         self.system_sync_remaining = Gauge(
             "ramses_system_sync_remaining_seconds",
             "Seconds remaining until next system sync cycle",
-            ["device_id"],
+            ["device_id", "device_name", "zone_name"],
         )
 
         # System sync last update timestamp
         self.system_sync_timestamp = Gauge(
             "ramses_system_sync_last_timestamp",
             "Unix timestamp of the last system sync message received",
-            ["device_id"],
+            ["device_id", "device_name", "zone_name"],
         )
 
         # Boiler communication metrics
@@ -414,8 +437,16 @@ class RamsesPrometheusExporter:
             raise
 
     def _get_device_name(self, device_id: str) -> str:
-        """Get device name/alias from gateway, return 'unknown' if not available."""
-        if not device_id or device_id == "unknown" or not self.gateway:
+        """Get device name/alias from cache or gateway, return 'unknown' if not available."""
+        if not device_id or device_id == "unknown":
+            return "unknown"
+
+        # Check cache first
+        if device_id in self.device_name_cache:
+            return self.device_name_cache[device_id]["name"]
+
+        # Try to get from gateway if available
+        if not self.gateway:
             return "unknown"
 
         try:
@@ -455,8 +486,16 @@ class RamsesPrometheusExporter:
         return str(code)
 
     def _get_zone_name(self, zone_idx: str) -> str:
-        """Get zone name from gateway zones, return 'unknown' if not available."""
-        if not zone_idx or zone_idx == "unknown" or not self.gateway:
+        """Get zone name from cache or gateway zones, return 'unknown' if not available."""
+        if not zone_idx or zone_idx == "unknown":
+            return "unknown"
+
+        # Check cache first
+        if zone_idx in self.zone_name_cache:
+            return self.zone_name_cache[zone_idx]["name"]
+
+        # Try to get from gateway if available
+        if not self.gateway:
             return "unknown"
 
         try:
@@ -475,43 +514,138 @@ class RamsesPrometheusExporter:
 
         return "unknown"
 
-    def _update_zone_info(self, zone_idx: str):
-        """Update zone info metric with zone index and name mapping.
-
-        Only creates/updates the metric if we have a real zone name (not 'unknown').
-        This prevents cluttering metrics with unknown zones.
-        """
-        if not zone_idx or zone_idx == "unknown":
+    def _load_cache(self):
+        """Load zone and device name cache from disk."""
+        if not self.cache_file.exists():
+            logger.info(f"No cache file found at {self.cache_file}, starting with empty cache")
             return
 
-        zone_name = self._get_zone_name(zone_idx)
+        try:
+            with open(self.cache_file, "r") as f:
+                cache_data = json.load(f)
+            
+            self.zone_name_cache = cache_data.get("zones", {})
+            self.device_name_cache = cache_data.get("devices", {})
+            
+            zone_count = len(self.zone_name_cache)
+            device_count = len(self.device_name_cache)
+            logger.info(
+                f"Loaded cache from {self.cache_file}: "
+                f"{zone_count} zones, {device_count} devices"
+            )
+            
+            # Log the cached data for visibility
+            if zone_count > 0:
+                logger.info(f"Cached zones: {list(self.zone_name_cache.keys())}")
+            if device_count > 0:
+                logger.info(f"Cached devices: {list(self.device_name_cache.keys())}")
+                
+        except (json.JSONDecodeError, IOError) as e:
+            logger.error(f"Failed to load cache from {self.cache_file}: {e}")
+            logger.info("Starting with empty cache")
+            self.zone_name_cache = {}
+            self.device_name_cache = {}
 
-        # Only set the metric if we have a real zone name (not 'unknown')
-        # This prevents creating metrics for zones before their names are discovered
-        if zone_name == "unknown":
+    def _save_cache(self):
+        """Save zone and device name cache to disk."""
+        try:
+            cache_data = {
+                "zones": self.zone_name_cache,
+                "devices": self.device_name_cache,
+                "last_updated": datetime.now().isoformat(),
+            }
+            
+            # Write to temp file first, then rename for atomic write
+            temp_file = self.cache_file.with_suffix(".tmp")
+            with open(temp_file, "w") as f:
+                json.dump(cache_data, f, indent=2)
+            
+            temp_file.replace(self.cache_file)
+            
+            logger.debug(
+                f"Saved cache to {self.cache_file}: "
+                f"{len(self.zone_name_cache)} zones, {len(self.device_name_cache)} devices"
+            )
+        except (IOError, OSError) as e:
+            logger.error(f"Failed to save cache to {self.cache_file}: {e}")
+
+    def _update_zone_name_cache(self, zone_idx: str, zone_name: str):
+        """Update zone name cache and save to disk if changed."""
+        if not zone_idx or not zone_name or zone_name == "unknown":
             return
+        
+        current_timestamp = time.time()
+        
+        # Check if this is new or updated information
+        if zone_idx not in self.zone_name_cache:
+            # New zone discovered
+            self.zone_name_cache[zone_idx] = {
+                "name": zone_name,
+                "last_seen": current_timestamp,
+                "first_seen": current_timestamp,
+            }
+            logger.info(f"Discovered new zone: {zone_idx} = '{zone_name}'")
+            self._save_cache()
+        elif self.zone_name_cache[zone_idx]["name"] != zone_name:
+            # Zone name changed - validate it's more recent
+            old_name = self.zone_name_cache[zone_idx]["name"]
+            self.zone_name_cache[zone_idx]["name"] = zone_name
+            self.zone_name_cache[zone_idx]["last_seen"] = current_timestamp
+            logger.warning(
+                f"Zone {zone_idx} name changed from '{old_name}' to '{zone_name}' "
+                f"(updating cache)"
+            )
+            self._save_cache()
+        else:
+            # Just update last_seen timestamp (don't save to reduce I/O)
+            self.zone_name_cache[zone_idx]["last_seen"] = current_timestamp
 
-        # Set the zone info metric to 1 (it's always 1, used for joining)
-        self.zone_info.labels(zone_idx=zone_idx, zone_name=zone_name).set(1)
+    def _update_device_name_cache(self, device_id: str, device_name: str):
+        """Update device name cache and save to disk if changed."""
+        if not device_id or not device_name or device_name == "unknown":
+            return
+        
+        current_timestamp = time.time()
+        
+        # Check if this is new or updated information
+        if device_id not in self.device_name_cache:
+            # New device discovered
+            self.device_name_cache[device_id] = {
+                "name": device_name,
+                "last_seen": current_timestamp,
+                "first_seen": current_timestamp,
+            }
+            logger.info(f"Discovered new device: {device_id} = '{device_name}'")
+            self._save_cache()
+        elif self.device_name_cache[device_id]["name"] != device_name:
+            # Device name changed - validate it's more recent
+            old_name = self.device_name_cache[device_id]["name"]
+            self.device_name_cache[device_id]["name"] = device_name
+            self.device_name_cache[device_id]["last_seen"] = current_timestamp
+            logger.warning(
+                f"Device {device_id} name changed from '{old_name}' to '{device_name}' "
+                f"(updating cache)"
+            )
+            self._save_cache()
+        else:
+            # Just update last_seen timestamp (don't save to reduce I/O)
+            self.device_name_cache[device_id]["last_seen"] = current_timestamp
 
-    def _update_device_info(self, device_id: str):
-        """Update device info metric with device ID and name mapping.
-
-        Only creates/updates the metric if we have a real device name (not 'unknown').
-        This prevents cluttering metrics with unknown devices.
+    def _get_zone_for_device(self, device_id: str) -> str:
+        """Get zone_idx for a device by searching zone_devices_map.
+        
+        Returns the zone_idx if device is found in any zone, otherwise 'unknown'.
         """
         if not device_id or device_id == "unknown":
-            return
-
-        device_name = self._get_device_name(device_id)
-
-        # Only set the metric if we have a real device name (not 'unknown')
-        # This prevents creating metrics for devices before their names are discovered
-        if device_name == "unknown":
-            return
-
-        # Set the device info metric to 1 (it's always 1, used for joining)
-        self.device_info.labels(device_id=device_id, device_name=device_name).set(1)
+            return "unknown"
+        
+        # Search through all zones to find this device
+        for zone_idx, roles in self.zone_devices_map.items():
+            for device_role, device_list in roles.items():
+                if device_id in device_list:
+                    return zone_idx
+        
+        return "unknown"
 
     def _capture_message_metrics(self, msg: Message):
         """Capture metrics from a RAMSES message."""
@@ -527,21 +661,29 @@ class RamsesPrometheusExporter:
         source_device = str(msg.src.id) if msg.src and hasattr(msg.src, "id") else "unknown"
         dest_device = str(msg.dst.id) if msg.dst and hasattr(msg.dst, "id") else "unknown"
 
-        # Update device info metrics for both source and destination
-        self._update_device_info(source_device)
-        self._update_device_info(dest_device)
-
         # Update device last seen timestamp for source device (message sender)
         if source_device != "unknown":
-            self.device_last_seen.labels(device_id=source_device).set(time.time())
+            device_name = self._get_device_name(source_device)
+            zone_idx = self._get_zone_for_device(source_device)
+            zone_name = self._get_zone_name(zone_idx) if zone_idx != "unknown" else "unknown"
+            self.device_last_seen.labels(
+                device_id=source_device,
+                device_name=device_name,
+                zone_name=zone_name
+            ).set(time.time())
 
-        # Update counters (without device names)
+        # Get zone name for source device
+        source_zone_idx = self._get_zone_for_device(source_device)
+        source_zone_name = self._get_zone_name(source_zone_idx) if source_zone_idx != "unknown" else "unknown"
+        
+        # Update counters (with zone name)
         self.messages_total.labels(
             message_type=msg_type,
             verb=verb,
             code=code,
             source_device=source_device,
             destination_device=dest_device,
+            zone_name=source_zone_name,
         ).inc()
 
         self.message_types_counter.labels(code=code, code_name=code_name, verb=verb).inc()
@@ -608,18 +750,51 @@ class RamsesPrometheusExporter:
                     zone_idx = msg.payload["zone_idx"]
                     zone_name = msg.payload["name"]
                     if zone_idx and zone_name:
-                        # Directly set the zone_info metric
-                        self.zone_info.labels(zone_idx=zone_idx, zone_name=zone_name).set(1)
+                        # Update cache with zone name
+                        self._update_zone_name_cache(zone_idx, zone_name)
                         logger.debug(f"Captured zone name from message: {zone_idx} -> {zone_name}")
+            
+            # Capture zone-to-device mappings from zone_devices messages (code 000C)
+            # This tracks which devices are associated with which zones and their roles
+            if (code == "000C" or code == "zone_devices") and isinstance(msg.payload, dict):
+                if "zone_idx" in msg.payload and "device_role" in msg.payload:
+                    zone_idx = msg.payload["zone_idx"]
+                    device_role = msg.payload["device_role"]
+                    devices = msg.payload.get("devices", [])
+                    
+                    if zone_idx and device_role:
+                        # Update our zone-to-device mapping
+                        if devices:
+                            # Store the devices for this zone and role
+                            self.zone_devices_map[zone_idx][device_role] = devices
+                            logger.debug(
+                                f"Captured zone devices: zone {zone_idx}, role {device_role}, "
+                                f"devices {devices}"
+                            )
+                        else:
+                            # Empty device list - still record the role exists but with no devices
+                            self.zone_devices_map[zone_idx][device_role] = []
+                            logger.debug(
+                                f"Captured zone devices (empty): zone {zone_idx}, role {device_role}"
+                            )
 
             # Extract temperature from payload if available
             if isinstance(msg.payload, dict) and "temperature" in msg.payload:
                 try:
                     temperature = float(msg.payload["temperature"])
-                    self.device_temperature.labels(device_id=source_device).set(temperature)
                     device_name = self._get_device_name(source_device)
+                    zone_idx = self._get_zone_for_device(source_device)
+                    zone_name = self._get_zone_name(zone_idx) if zone_idx != "unknown" else "unknown"
+                    
+                    self.device_temperature.labels(
+                        device_id=source_device,
+                        device_name=device_name,
+                        zone_name=zone_name
+                    ).set(temperature)
+                    
                     logger.debug(
-                        f"Updated temperature for device {source_device} ({device_name}): {temperature}°C"
+                        f"Updated temperature for device {source_device} ({device_name}) "
+                        f"in zone {zone_name}: {temperature}°C"
                     )
                 except (ValueError, TypeError) as e:
                     logger.warning(f"Could not parse temperature from payload: {e}")
@@ -631,17 +806,19 @@ class RamsesPrometheusExporter:
                     setpoint = float(msg.payload["setpoint"])
                     # Get zone_idx if available, otherwise use '00'
                     zone_idx = msg.payload.get("zone_idx", "00")
-
-                    # Update zone info if we have a zone_idx
-                    if zone_idx and zone_idx != "00":
-                        self._update_zone_info(zone_idx)
-
-                    self.device_setpoint.labels(device_id=source_device, zone_idx=zone_idx).set(
-                        setpoint
-                    )
                     device_name = self._get_device_name(source_device)
+                    zone_name = self._get_zone_name(zone_idx)
+
+                    self.device_setpoint.labels(
+                        device_id=source_device,
+                        device_name=device_name,
+                        zone_idx=zone_idx,
+                        zone_name=zone_name
+                    ).set(setpoint)
+                    
                     logger.debug(
-                        f"Updated setpoint for device {source_device} ({device_name}) zone {zone_idx}: {setpoint}°C"
+                        f"Updated setpoint for device {source_device} ({device_name}) "
+                        f"zone {zone_idx} ({zone_name}): {setpoint}°C"
                     )
                 except (ValueError, TypeError) as e:
                     logger.warning(f"Could not parse setpoint from payload: {e}")
@@ -652,19 +829,21 @@ class RamsesPrometheusExporter:
                 try:
                     window_open = bool(msg.payload["window_open"])
                     zone_idx = msg.payload.get("zone_idx", "00")
-
-                    # Update zone info if we have a zone_idx
-                    if zone_idx and zone_idx != "00":
-                        self._update_zone_info(zone_idx)
+                    device_name = self._get_device_name(source_device)
+                    zone_name = self._get_zone_name(zone_idx)
 
                     # Set to 1 if open, 0 if closed
-                    self.zone_window_open.labels(device_id=source_device, zone_idx=zone_idx).set(
-                        1 if window_open else 0
-                    )
-                    device_name = self._get_device_name(source_device)
+                    self.zone_window_open.labels(
+                        device_id=source_device,
+                        device_name=device_name,
+                        zone_idx=zone_idx,
+                        zone_name=zone_name
+                    ).set(1 if window_open else 0)
+                    
                     status = "OPEN" if window_open else "CLOSED"
                     logger.debug(
-                        f"Updated window state for device {source_device} ({device_name}) zone {zone_idx}: {status}"
+                        f"Updated window state for device {source_device} ({device_name}) "
+                        f"zone {zone_idx} ({zone_name}): {status}"
                     )
                 except (ValueError, TypeError) as e:
                     logger.warning(f"Could not parse window state from payload: {e}")
@@ -675,10 +854,8 @@ class RamsesPrometheusExporter:
                 try:
                     mode = str(msg.payload["mode"])
                     zone_idx = msg.payload.get("zone_idx", "00")
-
-                    # Update zone info if we have a zone_idx
-                    if zone_idx and zone_idx != "00":
-                        self._update_zone_info(zone_idx)
+                    device_name = self._get_device_name(source_device)
+                    zone_name = self._get_zone_name(zone_idx)
 
                     # Clear previous mode metrics for this zone (set all to 0)
                     # This ensures only the current mode is set to 1
@@ -692,17 +869,25 @@ class RamsesPrometheusExporter:
                     ]
                     for m in possible_modes:
                         self.zone_mode.labels(
-                            device_id=source_device, zone_idx=zone_idx, mode=m
+                            device_id=source_device,
+                            device_name=device_name,
+                            zone_idx=zone_idx,
+                            zone_name=zone_name,
+                            mode=m
                         ).set(0)
 
                     # Set current mode to 1
                     self.zone_mode.labels(
-                        device_id=source_device, zone_idx=zone_idx, mode=mode
+                        device_id=source_device,
+                        device_name=device_name,
+                        zone_idx=zone_idx,
+                        zone_name=zone_name,
+                        mode=mode
                     ).set(1)
 
-                    device_name = self._get_device_name(source_device)
                     logger.debug(
-                        f"Updated zone mode for device {source_device} ({device_name}) zone {zone_idx}: {mode}"
+                        f"Updated zone mode for device {source_device} ({device_name}) "
+                        f"zone {zone_idx} ({zone_name}): {mode}"
                     )
                 except (ValueError, TypeError, KeyError) as e:
                     logger.warning(f"Could not parse zone mode from payload: {e}")
@@ -715,19 +900,20 @@ class RamsesPrometheusExporter:
                     # Heat demand can be zone-specific (zone_idx) or system-wide (domain_id)
                     # Use zone_idx if available, otherwise use domain_id, or '00' as fallback
                     zone_idx = msg.payload.get("zone_idx", msg.payload.get("domain_id", "00"))
-
-                    # Update zone info if we have a zone_idx
-                    if zone_idx and zone_idx != "00":
-                        self._update_zone_info(zone_idx)
-
-                    self.heat_demand.labels(device_id=source_device, zone_idx=zone_idx).set(
-                        heat_demand
-                    )
-
                     device_name = self._get_device_name(source_device)
+                    zone_name = self._get_zone_name(zone_idx)
+
+                    self.heat_demand.labels(
+                        device_id=source_device,
+                        device_name=device_name,
+                        zone_idx=zone_idx,
+                        zone_name=zone_name
+                    ).set(heat_demand)
+
                     percentage = heat_demand * 100
                     logger.debug(
-                        f"Updated heat demand for device {source_device} ({device_name}) zone {zone_idx}: {percentage:.1f}%"
+                        f"Updated heat demand for device {source_device} ({device_name}) "
+                        f"zone {zone_idx} ({zone_name}): {percentage:.1f}%"
                     )
                 except (ValueError, TypeError) as e:
                     logger.warning(f"Could not parse heat demand from payload: {e}")
@@ -737,22 +923,77 @@ class RamsesPrometheusExporter:
             if isinstance(msg.payload, dict) and "remaining_seconds" in msg.payload:
                 try:
                     remaining_seconds = float(msg.payload["remaining_seconds"])
+                    device_name = self._get_device_name(source_device)
+                    zone_idx = self._get_zone_for_device(source_device)
+                    zone_name = self._get_zone_name(zone_idx) if zone_idx != "unknown" else "unknown"
 
                     # Update the remaining seconds until next sync
-                    self.system_sync_remaining.labels(device_id=source_device).set(
-                        remaining_seconds
-                    )
+                    self.system_sync_remaining.labels(
+                        device_id=source_device,
+                        device_name=device_name,
+                        zone_name=zone_name
+                    ).set(remaining_seconds)
 
                     # Update the timestamp of when this sync message was received
-                    self.system_sync_timestamp.labels(device_id=source_device).set(time.time())
+                    self.system_sync_timestamp.labels(
+                        device_id=source_device,
+                        device_name=device_name,
+                        zone_name=zone_name
+                    ).set(time.time())
 
-                    device_name = self._get_device_name(source_device)
                     next_sync_time = msg.payload.get("_next_sync", "unknown")
                     logger.debug(
                         f"Updated system sync for device {source_device} ({device_name}): {remaining_seconds:.1f}s (next: {next_sync_time})"
                     )
                 except (ValueError, TypeError) as e:
                     logger.warning(f"Could not parse system sync from payload: {e}")
+
+            # Extract system fault information from payload if available
+            # System faults appear in message code 0418 (system_fault)
+            if isinstance(msg.payload, dict) and "log_entry" in msg.payload:
+                try:
+                    log_entry = msg.payload["log_entry"]
+                    if isinstance(log_entry, tuple) and len(log_entry) >= 6:
+                        timestamp_str = log_entry[0]
+                        event_type = log_entry[1]  # 'fault' or 'restore'
+                        fault_type = log_entry[2]  # e.g., 'comms_fault'
+                        device_type = log_entry[3]  # e.g., 'dhw_sensor'
+                        zone_idx = log_entry[4]  # e.g., 'FA'
+                        device_id = log_entry[5] if len(log_entry) > 5 else "unknown"
+                        
+                        # Track comms_fault specifically
+                        if fault_type == "comms_fault":
+                            # Increment counter
+                            self.comms_fault_total.labels(
+                                device_id=device_id,
+                                device_type=device_type,
+                                zone_idx=zone_idx,
+                                event_type=event_type
+                            ).inc()
+                            
+                            # Update state (0=ok/restore, 1=fault)
+                            fault_state = 0 if event_type == "restore" else 1
+                            self.comms_fault_state.labels(
+                                device_id=device_id,
+                                device_type=device_type,
+                                zone_idx=zone_idx
+                            ).set(fault_state)
+                            
+                            # Update timestamp
+                            self.comms_fault_last_timestamp.labels(
+                                device_id=device_id,
+                                device_type=device_type,
+                                zone_idx=zone_idx,
+                                event_type=event_type
+                            ).set(time.time())
+                            
+                            status = "RESTORED" if event_type == "restore" else "FAULT"
+                            logger.info(
+                                f"Communications fault {status}: device {device_id} "
+                                f"({device_type}) zone {zone_idx}"
+                            )
+                except (ValueError, TypeError, IndexError) as e:
+                    logger.warning(f"Could not parse system fault from payload: {e}")
 
             # Extract boiler setpoint from payload if available
             # Boiler setpoint appears in message code 22D9 (boiler_setpoint)

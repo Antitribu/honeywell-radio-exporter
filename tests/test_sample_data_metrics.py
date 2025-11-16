@@ -48,12 +48,21 @@ def test_sample_data_metrics_generation():
     sample_data_dir = test_dir / "sample_data"
     input_file = sample_data_dir / "ramses.msgs"
     output_file = sample_data_dir / "generated.txt"
+    test_cache_file = sample_data_dir / ".test_cache.json"
 
     # Ensure sample data exists
     assert input_file.exists(), f"Sample data not found: {input_file}"
 
+    # Clean up any existing test cache
+    if test_cache_file.exists():
+        test_cache_file.unlink()
+
     with patch("honeywell_radio_exporter.ramses_prometheus_exporter.start_http_server"):
-        exporter = RamsesPrometheusExporter(port=8000, ramses_port="/dev/ttyUSB0")
+        exporter = RamsesPrometheusExporter(
+            port=8000,
+            ramses_port="/dev/ttyUSB0",
+            cache_file=str(test_cache_file)
+        )
 
         # Mock gateway with some device and zone names for richer output
         mock_gateway = MagicMock()
@@ -209,8 +218,12 @@ def test_sample_data_metrics_generation():
         print(f"Output Size: {output_file.stat().st_size:,} bytes")
         print(f"{'='*80}\n")
 
-        # Return metrics for potential inspection
-        return metrics_output
+    # Clean up test cache file after test
+    if test_cache_file.exists():
+        test_cache_file.unlink()
+
+    # Return metrics for potential inspection
+    return metrics_output
 
 
 def test_generated_metrics_file_exists():

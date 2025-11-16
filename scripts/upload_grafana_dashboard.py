@@ -326,24 +326,48 @@ class GrafanaDashboardUploader:
             return False
 
     def _update_datasource_uids(self, dashboard: Dict[str, Any], datasource_uid: str):
-        """Recursively update datasource UIDs in dashboard panels."""
+        """Recursively update datasource UIDs in dashboard panels.
+        
+        Note: Preserves null datasources in templating variables to maintain
+        default datasource behavior.
+        """
         if isinstance(dashboard, dict):
-            # Update datasource at panel level
+            # Check if we're in a templating variable - preserve null datasources
+            is_variable = (
+                "name" in dashboard and 
+                "type" in dashboard and 
+                dashboard.get("type") in ["query", "interval", "custom", "textbox", "constant", "datasource"]
+            )
+            
+            # Update datasource at panel/target level (but not for variables with null datasource)
             if "datasource" in dashboard:
-                if isinstance(dashboard["datasource"], dict):
+                # Skip updating if this is a variable with explicitly null datasource
+                if is_variable and dashboard["datasource"] is None:
+                    pass  # Preserve null to use default datasource
+                elif isinstance(dashboard["datasource"], dict):
                     dashboard["datasource"]["uid"] = datasource_uid
-                else:
+                elif not is_variable:
+                    # Only set datasource for non-variables
                     dashboard["datasource"] = {"uid": datasource_uid, "type": "prometheus"}
 
-            # Update targets datasource
-            if "targets" in dashboard:
+            # Update targets datasource (panels, not variables)
+            if "targets" in dashboard and not is_variable:
                 for target in dashboard["targets"]:
                     if isinstance(target, dict):
                         target["datasource"] = {"uid": datasource_uid, "type": "prometheus"}
 
             # Recurse into nested structures
-            for value in dashboard.values():
-                if isinstance(value, (dict, list)):
+            for key, value in dashboard.items():
+                # Don't recurse into templating variables if they have null datasource
+                if key == "templating":
+                    # Handle templating specially to preserve variable datasources
+                    if isinstance(value, dict) and "list" in value:
+                        for var in value["list"]:
+                            if isinstance(var, dict) and var.get("datasource") is not None:
+                                # Only update non-null variable datasources
+                                if isinstance(var["datasource"], dict):
+                                    var["datasource"]["uid"] = datasource_uid
+                elif isinstance(value, (dict, list)):
                     self._update_datasource_uids(value, datasource_uid)
 
         elif isinstance(dashboard, list):

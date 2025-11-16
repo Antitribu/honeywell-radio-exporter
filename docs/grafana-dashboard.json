@@ -2,7 +2,12 @@
   "dashboard": {
     "id": null,
     "title": "RAMSES RF System Monitor",
-    "tags": ["ramses", "rf", "hvac", "home-automation"],
+    "tags": [
+      "ramses",
+      "rf",
+      "hvac",
+      "home-automation"
+    ],
     "style": "dark",
     "timezone": "browser",
     "templating": {
@@ -11,19 +16,16 @@
           "name": "zone",
           "type": "query",
           "label": "Zone",
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          },
+          "datasource": null,
           "query": {
-            "query": "label_values(ramses_zone_info, zone_name)",
+            "query": "label_values(ramses_device_setpoint_celsius, zone_name)",
             "refId": "PrometheusVariableQueryEditor-VariableQuery"
           },
           "refresh": 1,
           "regex": "",
           "multi": true,
           "includeAll": true,
-          "allValue": ".*",
+          "allValue": null,
           "current": {
             "selected": true,
             "text": "All",
@@ -74,17 +76,13 @@
         }
       },
       {
-        "id": 3,
-        "title": "Message Processing Duration",
-        "type": "graph",
+        "id": 16,
+        "title": "Zone Window Status",
+        "type": "stat",
         "targets": [
           {
-            "expr": "histogram_quantile(0.95, rate(ramses_message_processing_duration_seconds_bucket[5m]))",
-            "legendFormat": "95th percentile"
-          },
-          {
-            "expr": "histogram_quantile(0.50, rate(ramses_message_processing_duration_seconds_bucket[5m]))",
-            "legendFormat": "50th percentile"
+            "expr": "ramses_zone_window_open",
+            "legendFormat": "{{zone_name}}"
           }
         ],
         "gridPos": {
@@ -92,413 +90,6 @@
           "w": 6,
           "x": 18,
           "y": 0
-        },
-        "lines": true,
-        "points": false,
-        "linewidth": 2
-      },
-      {
-        "id": 4,
-        "title": "Top Message Types",
-        "type": "table",
-        "targets": [
-          {
-            "expr": "topk(10, sum by (code, verb) (rate(ramses_message_types_total[5m])))",
-            "format": "table"
-          }
-        ],
-        "gridPos": {
-          "h": 8,
-          "w": 12,
-          "x": 0,
-          "y": 8
-        },
-        "transformations": [
-          {
-            "id": "organize",
-            "options": {
-              "excludeByName": {
-                "Time": true,
-                "job": true,
-                "instance": true,
-                "monitor": true,
-                "origin_prometheus": true
-              }
-            }
-          }
-        ]
-      },
-      {
-        "id": 5,
-        "title": "Device Communications",
-        "type": "heatmap",
-        "targets": [
-          {
-            "expr": "sum by (source_device, destination_device) (rate(ramses_device_communications_total[5m]))",
-            "format": "heatmap"
-          }
-        ],
-        "gridPos": {
-          "h": 8,
-          "w": 12,
-          "x": 12,
-          "y": 8
-        }
-      },
-      {
-        "id": 6,
-        "title": "Error Rate",
-        "type": "graph",
-        "targets": [
-          {
-            "expr": "rate(ramses_message_errors_total[5m])",
-            "legendFormat": "{{error_type}}"
-          }
-        ],
-        "gridPos": {
-          "h": 8,
-          "w": 12,
-          "x": 0,
-          "y": 16
-        },
-        "lines": true,
-        "points": false,
-        "linewidth": 2
-      },
-      {
-        "id": 7,
-        "title": "Message Payload Size",
-        "type": "graph",
-        "targets": [
-          {
-            "expr": "histogram_quantile(0.95, rate(ramses_message_payload_size_bytes_bucket[5m]))",
-            "legendFormat": "95th percentile"
-          },
-          {
-            "expr": "histogram_quantile(0.50, rate(ramses_message_payload_size_bytes_bucket[5m]))",
-            "legendFormat": "50th percentile"
-          }
-        ],
-        "gridPos": {
-          "h": 8,
-          "w": 12,
-          "x": 12,
-          "y": 16
-        },
-        "lines": true,
-        "points": false,
-        "linewidth": 2
-      },
-      {
-        "id": 25,
-        "title": "Temperature Related",
-        "type": "row",
-        "collapsed": false,
-        "gridPos": {
-          "h": 1,
-          "w": 24,
-          "x": 0,
-          "y": 24
-        }
-      },
-      {
-        "id": 8,
-        "title": "Device Temperatures",
-        "type": "graph",
-        "targets": [
-          {
-            "expr": "ramses_device_temperature_celsius * on(device_id) group_left(device_name) ramses_device_info",
-            "legendFormat": "{{device_name}}"
-          }
-        ],
-        "gridPos": {
-          "h": 8,
-          "w": 12,
-          "x": 0,
-          "y": 25
-        },
-        "yaxes": [
-          {
-            "format": "celsius",
-            "label": "Temperature"
-          }
-        ],
-        "lines": true,
-        "points": false,
-        "linewidth": 2,
-        "legend": {
-          "show": true,
-          "alignAsTable": true,
-          "rightSide": true,
-          "avg": true,
-          "min": true,
-          "max": true,
-          "current": false,
-          "total": false,
-          "values": true
-        }
-      },
-      {
-        "id": 15,
-        "title": "Zone Setpoint vs Temperature",
-        "type": "graph",
-        "targets": [
-          {
-            "expr": "ramses_device_setpoint_celsius * on(zone_idx) group_left(zone_name) ramses_zone_info{zone_name=~\"$zone\"}",
-            "legendFormat": "{{zone_name}} setpoint"
-          },
-          {
-            "expr": "ramses_device_temperature_celsius * on(device_id) group_left(device_name) ramses_device_info",
-            "legendFormat": "{{device_name}} actual"
-          }
-        ],
-        "gridPos": {
-          "h": 8,
-          "w": 12,
-          "x": 12,
-          "y": 25
-        },
-        "yaxes": [
-          {
-            "format": "celsius",
-            "label": "Temperature"
-          }
-        ],
-        "lines": true,
-        "points": false,
-        "linewidth": 2,
-        "legend": {
-          "show": true,
-          "alignAsTable": true,
-          "rightSide": true,
-          "avg": true,
-          "min": true,
-          "max": true,
-          "current": false,
-          "total": false,
-          "values": true
-        }
-      },
-      {
-        "id": 9,
-        "title": "Heat Demand by Zone",
-        "type": "graph",
-        "targets": [
-          {
-            "expr": "(ramses_heat_demand * on(zone_idx) group_left(zone_name) ramses_zone_info{zone_name=~\"$zone\"}) * 100",
-            "legendFormat": "{{zone_name}}"
-          }
-        ],
-        "gridPos": {
-          "h": 8,
-          "w": 12,
-          "x": 0,
-          "y": 33
-        },
-        "yaxes": [
-          {
-            "format": "percent",
-            "label": "Heat Demand",
-            "min": 0,
-            "max": 100
-          }
-        ],
-        "lines": true,
-        "points": false,
-        "linewidth": 2
-      },
-      {
-        "id": 10,
-        "title": "Boiler Communication Health",
-        "type": "stat",
-        "targets": [
-          {
-            "expr": "time() - ramses_boiler_last_seen_timestamp",
-            "legendFormat": "{{boiler_id}} ({{boiler_name}})"
-          }
-        ],
-        "gridPos": {
-          "h": 6,
-          "w": 8,
-          "x": 12,
-          "y": 33
-        },
-        "fieldConfig": {
-          "defaults": {
-            "unit": "s",
-            "thresholds": {
-              "mode": "absolute",
-              "steps": [
-                {
-                  "value": 0,
-                  "color": "green"
-                },
-                {
-                  "value": 120,
-                  "color": "yellow"
-                },
-                {
-                  "value": 300,
-                  "color": "red"
-                }
-              ]
-            }
-          }
-        },
-        "options": {
-          "textMode": "value_and_name",
-          "colorMode": "background"
-        }
-      },
-      {
-        "id": 11,
-        "title": "Boiler Message Rate",
-        "type": "graph",
-        "targets": [
-          {
-            "expr": "rate(ramses_boiler_messages_sent_total[5m]) * 60",
-            "legendFormat": "Sent to {{boiler_id}}"
-          },
-          {
-            "expr": "rate(ramses_boiler_messages_received_total[5m]) * 60",
-            "legendFormat": "Received from {{boiler_id}}"
-          }
-        ],
-        "gridPos": {
-          "h": 6,
-          "w": 8,
-          "x": 0,
-          "y": 41
-        },
-        "yaxes": [
-          {
-            "format": "short",
-            "label": "Messages/min"
-          }
-        ],
-        "lines": true,
-        "points": false,
-        "linewidth": 2
-      },
-      {
-        "id": 12,
-        "title": "Boiler Response Rate",
-        "type": "gauge",
-        "targets": [
-          {
-            "expr": "sum by (boiler_id, boiler_name) (ramses_boiler_messages_received_total) / sum by (boiler_id, boiler_name) (ramses_boiler_messages_sent_total)",
-            "legendFormat": "{{boiler_id}}"
-          }
-        ],
-        "gridPos": {
-          "h": 6,
-          "w": 8,
-          "x": 8,
-          "y": 41
-        },
-        "fieldConfig": {
-          "defaults": {
-            "unit": "percentunit",
-            "min": 0,
-            "max": 1,
-            "thresholds": {
-              "mode": "absolute",
-              "steps": [
-                {
-                  "value": 0,
-                  "color": "red"
-                },
-                {
-                  "value": 0.5,
-                  "color": "yellow"
-                },
-                {
-                  "value": 0.8,
-                  "color": "green"
-                }
-              ]
-            }
-          }
-        }
-      },
-      {
-        "id": 13,
-        "title": "Boiler Message Types",
-        "type": "piechart",
-        "targets": [
-          {
-            "expr": "sum by (message_type) (ramses_boiler_messages_sent_total)",
-            "legendFormat": "{{message_type}}"
-          }
-        ],
-        "gridPos": {
-          "h": 8,
-          "w": 8,
-          "x": 16,
-          "y": 41
-        }
-      },
-      {
-        "id": 14,
-        "title": "Boiler Message History",
-        "type": "table",
-        "targets": [
-          {
-            "expr": "sum by (boiler_id, boiler_name, message_code, message_type) (ramses_boiler_messages_sent_total)",
-            "format": "table",
-            "instant": true
-          }
-        ],
-        "gridPos": {
-          "h": 8,
-          "w": 24,
-          "x": 0,
-          "y": 49
-        },
-        "transformations": [
-          {
-            "id": "organize",
-            "options": {
-              "excludeByName": {
-                "Time": true,
-                "job": true,
-                "instance": true,
-                "monitor": true,
-                "origin_prometheus": true
-              },
-              "indexByName": {
-                "boiler_id": 0,
-                "boiler_name": 1,
-                "message_code": 2,
-                "message_type": 3,
-                "Value": 4
-              },
-              "renameByName": {
-                "boiler_id": "Boiler ID",
-                "boiler_name": "Name",
-                "message_code": "Code",
-                "message_type": "Type",
-                "Value": "Count"
-              }
-            }
-          }
-        ]
-      },
-      {
-        "id": 16,
-        "title": "Zone Window Status",
-        "type": "stat",
-        "targets": [
-          {
-            "expr": "ramses_zone_window_open * on(zone_idx) group_left(zone_name) ramses_zone_info{zone_name=~\"$zone\"}",
-            "legendFormat": "{{zone_name}}"
-          }
-        ],
-        "gridPos": {
-          "h": 8,
-          "w": 6,
-          "x": 0,
-          "y": 57
         },
         "fieldConfig": {
           "defaults": {
@@ -525,63 +116,18 @@
         }
       },
       {
-        "id": 17,
-        "title": "System Sync Status",
-        "type": "gauge",
-        "targets": [
-          {
-            "expr": "ramses_system_sync_remaining_seconds",
-            "legendFormat": "{{device_id}}"
-          }
-        ],
-        "gridPos": {
-          "h": 8,
-          "w": 6,
-          "x": 6,
-          "y": 57
-        },
-        "fieldConfig": {
-          "defaults": {
-            "unit": "s",
-            "min": 0,
-            "max": 156,
-            "thresholds": {
-              "mode": "absolute",
-              "steps": [
-                {
-                  "value": 0,
-                  "color": "red"
-                },
-                {
-                  "value": 30,
-                  "color": "yellow"
-                },
-                {
-                  "value": 60,
-                  "color": "green"
-                }
-              ]
-            }
-          }
-        },
-        "options": {
-          "showThresholdLabels": false,
-          "showThresholdMarkers": true
-        }
-      },
-      {
         "id": 18,
         "title": "Device Last Seen",
         "type": "table",
         "targets": [
           {
-            "expr": "time() - ramses_device_last_seen_timestamp * on(device_id) group_left(device_name) ramses_device_info",
+            "expr": "time() - ramses_device_last_seen_timestamp",
             "format": "table",
             "instant": true,
             "refId": "A"
           },
           {
-            "expr": "ramses_device_setpoint_celsius * on(device_id) group_left(device_name) ramses_device_info * on(zone_idx) group_left(zone_name) ramses_zone_info * 0 + 1",
+            "expr": "ramses_device_setpoint_celsius * 0 + 1",
             "format": "table",
             "instant": true,
             "refId": "B"
@@ -589,9 +135,9 @@
         ],
         "gridPos": {
           "h": 8,
-          "w": 12,
-          "x": 12,
-          "y": 57
+          "w": 24,
+          "x": 0,
+          "y": 8
         },
         "transformations": [
           {
@@ -608,7 +154,8 @@
                 "monitor": true,
                 "origin_prometheus": true,
                 "Value #B": true,
-                "zone_idx": true
+                "zone_idx": true,
+                "device_role": true
               },
               "indexByName": {
                 "device_id": 0,
@@ -669,12 +216,490 @@
         }
       },
       {
-        "id": 19,
-        "title": "Zone Modes",
+        "id": 4,
+        "title": "Top Message Types",
         "type": "table",
         "targets": [
           {
-            "expr": "ramses_zone_mode_info{zone_idx=~\".+\"} * on(zone_idx) group_left(zone_name) ramses_zone_info{zone_name=~\"$zone\"} == 1",
+            "expr": "topk(10, sum by (code, verb) (rate(ramses_message_types_total[5m])))",
+            "format": "table"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 16
+        },
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {
+              "excludeByName": {
+                "Time": true,
+                "job": true,
+                "instance": true,
+                "monitor": true,
+                "origin_prometheus": true
+              }
+            }
+          }
+        ]
+      },
+      {
+        "id": 5,
+        "title": "Device Communications",
+        "type": "heatmap",
+        "targets": [
+          {
+            "expr": "sum by (source_device, destination_device) (rate(ramses_device_communications_total[5m]))",
+            "format": "heatmap"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 16
+        }
+      },
+      {
+        "id": 6,
+        "title": "Error Rate",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(ramses_message_errors_total[5m])",
+            "legendFormat": "{{error_type}}"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 24
+        },
+        "lines": true,
+        "points": false,
+        "linewidth": 2
+      },
+      {
+        "id": 100,
+        "title": "Zone: $zone",
+        "type": "row",
+        "collapsed": false,
+        "repeat": "zone",
+        "gridPos": {
+          "h": 1,
+          "w": 24,
+          "x": 0,
+          "y": 32
+        }
+      },
+      {
+        "id": 101,
+        "title": "$zone - Temperature & Setpoint",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "avg(ramses_device_temperature_celsius{zone_name=~\"$zone\"})",
+            "legendFormat": "Actual Temperature",
+            "refId": "A"
+          },
+          {
+            "expr": "avg(ramses_device_setpoint_celsius{zone_name=~\"$zone\"})",
+            "legendFormat": "Setpoint",
+            "refId": "B"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 33
+        },
+        "fieldConfig": {
+          "defaults": {
+            "custom": {
+              "drawStyle": "line",
+              "lineInterpolation": "smooth",
+              "lineWidth": 2,
+              "fillOpacity": 10,
+              "spanNulls": true,
+              "showPoints": "never"
+            },
+            "unit": "celsius",
+            "color": {
+              "mode": "palette-classic"
+            }
+          },
+          "overrides": [
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "Actual Temperature"
+              },
+              "properties": [
+                {
+                  "id": "color",
+                  "value": {
+                    "mode": "fixed",
+                    "fixedColor": "blue"
+                  }
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "Setpoint"
+              },
+              "properties": [
+                {
+                  "id": "color",
+                  "value": {
+                    "mode": "fixed",
+                    "fixedColor": "red"
+                  }
+                },
+                {
+                  "id": "custom.lineStyle",
+                  "value": {
+                    "dash": [
+                      10,
+                      10
+                    ],
+                    "fill": "dash"
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "options": {
+          "tooltip": {
+            "mode": "multi",
+            "sort": "none"
+          },
+          "legend": {
+            "showLegend": true,
+            "displayMode": "table",
+            "placement": "bottom",
+            "calcs": [
+              "last",
+              "mean",
+              "min",
+              "max"
+            ]
+          }
+        }
+      },
+      {
+        "id": 102,
+        "title": "$zone - Heat Demand",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "avg(ramses_heat_demand{zone_idx!=\"FC\", zone_name=~\"$zone\"}) * 100",
+            "legendFormat": "Heat Demand",
+            "refId": "A"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 33
+        },
+        "fieldConfig": {
+          "defaults": {
+            "custom": {
+              "drawStyle": "line",
+              "lineInterpolation": "smooth",
+              "lineWidth": 2,
+              "fillOpacity": 20,
+              "gradientMode": "opacity",
+              "spanNulls": true,
+              "showPoints": "never"
+            },
+            "unit": "percent",
+            "min": 0,
+            "max": 100,
+            "color": {
+              "mode": "thresholds"
+            },
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "value": 0,
+                  "color": "blue"
+                },
+                {
+                  "value": 20,
+                  "color": "green"
+                },
+                {
+                  "value": 50,
+                  "color": "yellow"
+                },
+                {
+                  "value": 75,
+                  "color": "orange"
+                },
+                {
+                  "value": 90,
+                  "color": "red"
+                }
+              ]
+            }
+          }
+        },
+        "options": {
+          "tooltip": {
+            "mode": "single",
+            "sort": "none"
+          },
+          "legend": {
+            "showLegend": true,
+            "displayMode": "table",
+            "placement": "bottom",
+            "calcs": [
+              "last",
+              "mean",
+              "max"
+            ]
+          }
+        }
+      },
+      {
+        "id": 103,
+        "title": "$zone - Message Rate",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "sum(rate(ramses_messages_total{zone_name=~\"$zone\"}[5m]))",
+            "legendFormat": "Messages per second",
+            "refId": "A"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 24,
+          "x": 0,
+          "y": 41
+        },
+        "fieldConfig": {
+          "defaults": {
+            "custom": {
+              "drawStyle": "line",
+              "lineInterpolation": "smooth",
+              "lineWidth": 2,
+              "fillOpacity": 10,
+              "spanNulls": true,
+              "showPoints": "never"
+            },
+            "unit": "reqps",
+            "color": {
+              "mode": "palette-classic"
+            }
+          }
+        },
+        "options": {
+          "tooltip": {
+            "mode": "multi",
+            "sort": "none"
+          },
+          "legend": {
+            "showLegend": true,
+            "displayMode": "table",
+            "placement": "bottom",
+            "calcs": [
+              "last",
+              "mean",
+              "max"
+            ]
+          }
+        }
+      },
+      {
+        "id": 25,
+        "title": "Temperature Related",
+        "type": "row",
+        "collapsed": false,
+        "gridPos": {
+          "h": 1,
+          "w": 24,
+          "x": 0,
+          "y": 50
+        }
+      },
+      {
+        "id": 9,
+        "title": "Heat Demand by Zone",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "ramses_heat_demand{zone_idx!=\"FC\"} * 100",
+            "legendFormat": "{{zone_name}}"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 51
+        },
+        "yaxes": [
+          {
+            "format": "percent",
+            "label": "Heat Demand",
+            "min": 0,
+            "max": 100
+          }
+        ],
+        "lines": true,
+        "points": false,
+        "linewidth": 2
+      },
+      {
+        "id": 10,
+        "title": "Boiler Communication Health",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "time() - ramses_boiler_last_seen_timestamp",
+            "legendFormat": "{{boiler_id}} ({{boiler_name}})"
+          }
+        ],
+        "gridPos": {
+          "h": 6,
+          "w": 8,
+          "x": 12,
+          "y": 51
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "s",
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "value": 0,
+                  "color": "green"
+                },
+                {
+                  "value": 120,
+                  "color": "yellow"
+                },
+                {
+                  "value": 300,
+                  "color": "red"
+                }
+              ]
+            }
+          }
+        },
+        "options": {
+          "textMode": "value_and_name",
+          "colorMode": "background"
+        }
+      },
+      {
+        "id": 11,
+        "title": "Boiler Message Rate",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(ramses_boiler_messages_sent_total[5m]) * 60",
+            "legendFormat": "Sent to {{boiler_id}}"
+          },
+          {
+            "expr": "rate(ramses_boiler_messages_received_total[5m]) * 60",
+            "legendFormat": "Received from {{boiler_id}}"
+          }
+        ],
+        "gridPos": {
+          "h": 6,
+          "w": 8,
+          "x": 0,
+          "y": 59
+        },
+        "yaxes": [
+          {
+            "format": "short",
+            "label": "Messages/min"
+          }
+        ],
+        "lines": true,
+        "points": false,
+        "linewidth": 2
+      },
+      {
+        "id": 12,
+        "title": "Boiler Response Rate",
+        "type": "gauge",
+        "targets": [
+          {
+            "expr": "sum by (boiler_id, boiler_name) (ramses_boiler_messages_received_total) / sum by (boiler_id, boiler_name) (ramses_boiler_messages_sent_total)",
+            "legendFormat": "{{boiler_id}}"
+          }
+        ],
+        "gridPos": {
+          "h": 6,
+          "w": 8,
+          "x": 8,
+          "y": 59
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percentunit",
+            "min": 0,
+            "max": 1,
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "value": 0,
+                  "color": "red"
+                },
+                {
+                  "value": 0.5,
+                  "color": "yellow"
+                },
+                {
+                  "value": 0.8,
+                  "color": "green"
+                }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 13,
+        "title": "Boiler Message Types",
+        "type": "piechart",
+        "targets": [
+          {
+            "expr": "sum by (message_type) (ramses_boiler_messages_sent_total)",
+            "legendFormat": "{{message_type}}"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 8,
+          "x": 16,
+          "y": 59
+        }
+      },
+      {
+        "id": 14,
+        "title": "Boiler Message History",
+        "type": "table",
+        "targets": [
+          {
+            "expr": "sum by (boiler_id, boiler_name, message_code, message_type) (ramses_boiler_messages_sent_total)",
             "format": "table",
             "instant": true
           }
@@ -683,7 +708,98 @@
           "h": 8,
           "w": 24,
           "x": 0,
-          "y": 65
+          "y": 67
+        },
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {
+              "excludeByName": {
+                "Time": true,
+                "job": true,
+                "instance": true,
+                "monitor": true,
+                "origin_prometheus": true
+              },
+              "indexByName": {
+                "boiler_id": 0,
+                "boiler_name": 1,
+                "message_code": 2,
+                "message_type": 3,
+                "Value": 4
+              },
+              "renameByName": {
+                "boiler_id": "Boiler ID",
+                "boiler_name": "Name",
+                "message_code": "Code",
+                "message_type": "Type",
+                "Value": "Count"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "id": 17,
+        "title": "System Sync Status",
+        "type": "gauge",
+        "targets": [
+          {
+            "expr": "ramses_system_sync_remaining_seconds",
+            "legendFormat": "{{device_id}}"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 6,
+          "x": 6,
+          "y": 75
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "s",
+            "min": 0,
+            "max": 156,
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "value": 0,
+                  "color": "red"
+                },
+                {
+                  "value": 30,
+                  "color": "yellow"
+                },
+                {
+                  "value": 60,
+                  "color": "green"
+                }
+              ]
+            }
+          }
+        },
+        "options": {
+          "showThresholdLabels": false,
+          "showThresholdMarkers": true
+        }
+      },
+      {
+        "id": 19,
+        "title": "Zone Modes",
+        "type": "table",
+        "targets": [
+          {
+            "expr": "ramses_zone_mode_info{zone_idx=~\".+\"} == 1",
+            "format": "table",
+            "instant": true
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 24,
+          "x": 0,
+          "y": 83
         },
         "transformations": [
           {
@@ -697,7 +813,8 @@
                 "job": true,
                 "instance": true,
                 "monitor": true,
-                "origin_prometheus": true
+                "origin_prometheus": true,
+                "device_role": true
               },
               "indexByName": {
                 "zone_name": 0,
@@ -725,7 +842,7 @@
           "h": 6,
           "w": 6,
           "x": 0,
-          "y": 68
+          "y": 91
         },
         "fieldConfig": {
           "defaults": {
@@ -760,7 +877,9 @@
           "orientation": "auto",
           "reduceOptions": {
             "values": false,
-            "calcs": ["lastNotNull"],
+            "calcs": [
+              "lastNotNull"
+            ],
             "fields": ""
           }
         }
@@ -779,7 +898,7 @@
           "h": 6,
           "w": 6,
           "x": 6,
-          "y": 68
+          "y": 91
         },
         "fieldConfig": {
           "defaults": {
@@ -819,7 +938,9 @@
           "orientation": "auto",
           "reduceOptions": {
             "values": false,
-            "calcs": ["lastNotNull"],
+            "calcs": [
+              "lastNotNull"
+            ],
             "fields": ""
           }
         }
@@ -846,7 +967,7 @@
           "h": 6,
           "w": 6,
           "x": 12,
-          "y": 68
+          "y": 91
         },
         "fieldConfig": {
           "defaults": {
@@ -887,7 +1008,9 @@
           "orientation": "auto",
           "reduceOptions": {
             "values": false,
-            "calcs": ["lastNotNull"],
+            "calcs": [
+              "lastNotNull"
+            ],
             "fields": ""
           }
         }
@@ -912,12 +1035,12 @@
           "h": 6,
           "w": 6,
           "x": 18,
-          "y": 68
+          "y": 91
         },
         "yaxes": [
           {
             "format": "celsius",
-            "label": "Setpoint (°C)",
+            "label": "Setpoint (\u00b0C)",
             "show": true
           },
           {
@@ -942,6 +1065,241 @@
           "rightSide": false,
           "total": false,
           "values": true
+        },
+        "lines": true,
+        "points": false,
+        "linewidth": 2
+      },
+      {
+        "id": 201,
+        "type": "row",
+        "title": "System Faults",
+        "gridPos": {
+          "h": 1,
+          "w": 24,
+          "x": 0,
+          "y": 97
+        },
+        "collapsed": false
+      },
+      {
+        "id": 202,
+        "title": "Communications Fault State",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "ramses_comms_fault_state",
+            "legendFormat": "{{device_id}} ({{device_type}})"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 8,
+          "x": 0,
+          "y": 98
+        },
+        "options": {
+          "reduceOptions": {
+            "values": false,
+            "fields": "",
+            "calcs": [
+              "lastNotNull"
+            ]
+          },
+          "orientation": "auto",
+          "textMode": "auto",
+          "colorMode": "background",
+          "graphMode": "none",
+          "justifyMode": "auto"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "mappings": [
+              {
+                "type": "value",
+                "options": {
+                  "0": {
+                    "text": "OK",
+                    "color": "green"
+                  },
+                  "1": {
+                    "text": "FAULT",
+                    "color": "red"
+                  }
+                }
+              }
+            ],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "value": null,
+                  "color": "green"
+                },
+                {
+                  "value": 1,
+                  "color": "red"
+                }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 203,
+        "title": "Communications Fault Events",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(ramses_comms_fault_total[5m])",
+            "legendFormat": "{{device_id}} ({{device_type}}) - {{event_type}}"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 16,
+          "x": 8,
+          "y": 98
+        },
+        "lines": true,
+        "points": false,
+        "linewidth": 2,
+        "yaxes": [
+          {
+            "label": "Events per second",
+            "format": "short"
+          },
+          {
+            "format": "short"
+          }
+        ]
+      },
+      {
+        "id": 204,
+        "title": "Communications Fault Last Seen",
+        "type": "table",
+        "targets": [
+          {
+            "expr": "ramses_comms_fault_last_timestamp",
+            "legendFormat": "",
+            "format": "table",
+            "instant": true
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 24,
+          "x": 0,
+          "y": 106
+        },
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {
+              "excludeByName": {
+                "Time": true,
+                "__name__": true,
+                "instance": true,
+                "job": true
+              },
+              "indexByName": {
+                "device_id": 0,
+                "device_type": 1,
+                "zone_idx": 2,
+                "event_type": 3,
+                "Value": 4
+              },
+              "renameByName": {
+                "device_id": "Device ID",
+                "device_type": "Device Type",
+                "zone_idx": "Zone",
+                "event_type": "Event Type",
+                "Value": "Last Seen (Unix)"
+              }
+            }
+          }
+        ],
+        "options": {
+          "showHeader": true
+        },
+        "fieldConfig": {
+          "defaults": {
+            "custom": {
+              "align": "auto",
+              "displayMode": "auto"
+            }
+          },
+          "overrides": [
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "Last Seen (Unix)"
+              },
+              "properties": [
+                {
+                  "id": "unit",
+                  "value": "dateTimeFromNow"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "id": 200,
+        "type": "row",
+        "title": "Exporter Information",
+        "gridPos": {
+          "h": 1,
+          "w": 24,
+          "x": 0,
+          "y": 114
+        },
+        "collapsed": false
+      },
+      {
+        "id": 3,
+        "title": "Message Processing Duration",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, rate(ramses_message_processing_duration_seconds_bucket[5m]))",
+            "legendFormat": "95th percentile"
+          },
+          {
+            "expr": "histogram_quantile(0.50, rate(ramses_message_processing_duration_seconds_bucket[5m]))",
+            "legendFormat": "50th percentile"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 115
+        },
+        "lines": true,
+        "points": false,
+        "linewidth": 2
+      },
+      {
+        "id": 7,
+        "title": "Message Payload Size",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, rate(ramses_message_payload_size_bytes_bucket[5m]))",
+            "legendFormat": "95th percentile"
+          },
+          {
+            "expr": "histogram_quantile(0.50, rate(ramses_message_payload_size_bytes_bucket[5m]))",
+            "legendFormat": "50th percentile"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 115
         },
         "lines": true,
         "points": false,

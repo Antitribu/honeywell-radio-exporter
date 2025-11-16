@@ -277,15 +277,15 @@ def test_zone_name_data_exists():
 
     assert len(zone_names) > 0, "No zone_name messages found"
 
-    # Check generated metrics
+    # Check generated metrics - zone names should be in device metrics now
     output_file = test_dir / "sample_data" / "generated.txt"
     if output_file.exists():
         with open(output_file, "r") as f:
             content = f.read()
-            has_zone_info = "ramses_zone_info{" in content
-            if not has_zone_info:
+            has_zone_names = 'zone_name="' in content and 'zone_name="' in content
+            if not has_zone_names:
                 pytest.fail(
-                    f"ramses_zone_info has no data points despite {len(zone_names)} "
+                    f"zone_name labels not found in metrics despite {len(zone_names)} "
                     f"zone_name messages in sample data"
                 )
 
@@ -308,11 +308,7 @@ def test_zone_name_office_in_generated_metrics():
     with open(output_file, "r") as f:
         content = f.read()
 
-    # Check for ramses_zone_info metric with Office label
-    has_zone_info = "ramses_zone_info" in content
-    assert has_zone_info, "ramses_zone_info metric not found in generated output"
-
-    # Look for the Office zone specifically
+    # Look for the Office zone in any metric
     has_office = 'zone_name="Office"' in content
 
     if not has_office:
@@ -322,24 +318,27 @@ def test_zone_name_office_in_generated_metrics():
         zone_names = re.findall(r'zone_name="([^"]+)"', content)
         unique_zones = set(zone_names)
         pytest.fail(
-            f"Zone name 'Office' not found in ramses_zone_info metric. "
+            f"Zone name 'Office' not found in metrics. "
             f"Available zone names: {sorted(unique_zones)}"
         )
 
-    # Verify the full metric line exists
-    office_metric_pattern = r'ramses_zone_info\{zone_idx="[^"]+",zone_name="Office"\} 1\.0'
+    # Verify the Office zone appears in actual metrics
     import re
-
-    office_metrics = re.findall(office_metric_pattern, content)
+    office_metric_patterns = [
+        r'ramses_device_temperature_celsius\{[^}]*zone_name="Office"[^}]*\}',
+        r'ramses_device_setpoint_celsius\{[^}]*zone_name="Office"[^}]*\}',
+        r'ramses_heat_demand\{[^}]*zone_name="Office"[^}]*\}'
+    ]
+    
+    office_metrics = []
+    for pattern in office_metric_patterns:
+        office_metrics.extend(re.findall(pattern, content))
 
     assert len(office_metrics) > 0, (
-        f"Expected at least one ramses_zone_info metric with zone_name='Office', "
-        f"found {len(office_metrics)}"
+        f"Expected at least one metric with zone_name='Office', found {len(office_metrics)}"
     )
 
-    print(f"\n✓ Found {len(office_metrics)} Office zone metric(s):")
-    for metric in office_metrics:
-        print(f"  {metric}")
+    print(f"\n✓ Found {len(office_metrics)} Office zone metric(s)")
 
 
 def test_all_metrics_summary():
@@ -404,7 +403,7 @@ def test_all_metrics_summary():
             ("window_state", "ramses_zone_window_open{", data_counts["window_state"]),
             ("heat_demand", "ramses_heat_demand{", data_counts["heat_demand"]),
             ("temperature", "ramses_device_temperature_celsius{", data_counts["temperature"]),
-            ("zone_name", "ramses_zone_info{", data_counts["zone_name"]),
+            ("zone_name", 'zone_name="', data_counts["zone_name"]),
         ]
 
         failures = []
