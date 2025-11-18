@@ -332,6 +332,31 @@ class RamsesPrometheusExporter:
             ["boiler_id", "boiler_name"],
         )
 
+        # DHW (Domestic Hot Water) metrics
+        self.dhw_temperature = Gauge(
+            "ramses_dhw_temperature_celsius",
+            "DHW temperature reading in Celsius",
+            ["dhw_idx", "controller_id", "controller_name"],
+        )
+
+        self.dhw_setpoint = Gauge(
+            "ramses_dhw_setpoint_celsius",
+            "DHW setpoint temperature in Celsius",
+            ["dhw_idx", "controller_id", "controller_name"],
+        )
+
+        self.dhw_active = Gauge(
+            "ramses_dhw_active",
+            "DHW demand/active state (0 = off, 1 = on)",
+            ["dhw_idx", "controller_id", "controller_name"],
+        )
+
+        self.dhw_mode = Gauge(
+            "ramses_dhw_mode_info",
+            "DHW mode information (always 1, mode as label)",
+            ["dhw_idx", "controller_id", "controller_name", "mode"],
+        )
+
     async def start_gateway(self):
         """Start the RAMSES RF gateway."""
         try:
@@ -1065,6 +1090,74 @@ class RamsesPrometheusExporter:
 
                 except (ValueError, TypeError, KeyError) as e:
                     logger.warning(f"Could not parse boiler modulation/status from payload: {e}")
+
+        # DHW (Domestic Hot Water) message handling
+        if code_name in ["dhw_temp", "dhw_params", "dhw_mode"]:
+            try:
+                # Get controller device (usually 01:xxxxxx)
+                controller_id = source_device if source_device.startswith("01:") else destination_device
+                controller_name = self._get_device_name(controller_id)
+                
+                if code_name == "dhw_temp" and msg.payload:
+                    # Handle DHW temperature
+                    if "temperature" in msg.payload and msg.payload["temperature"] is not None:
+                        temperature = float(msg.payload["temperature"])
+                        dhw_idx = msg.payload.get("dhw_idx", "00")
+                        self.dhw_temperature.labels(
+                            dhw_idx=dhw_idx,
+                            controller_id=controller_id,
+                            controller_name=controller_name
+                        ).set(temperature)
+                        logger.debug(
+                            f"Updated DHW temperature for {dhw_idx}: {temperature:.2f}°C"
+                        )
+                
+                elif code_name == "dhw_params" and msg.payload:
+                    # Handle DHW setpoint
+                    if "setpoint" in msg.payload and msg.payload["setpoint"] is not None:
+                        setpoint = float(msg.payload["setpoint"])
+                        dhw_idx = msg.payload.get("dhw_idx", "00")
+                        self.dhw_setpoint.labels(
+                            dhw_idx=dhw_idx,
+                            controller_id=controller_id,
+                            controller_name=controller_name
+                        ).set(setpoint)
+                        logger.debug(
+                            f"Updated DHW setpoint for {dhw_idx}: {setpoint:.2f}°C"
+                        )
+                
+                elif code_name == "dhw_mode" and msg.payload:
+                    # Handle DHW active state and mode
+                    dhw_idx = msg.payload.get("dhw_idx", "00")
+                    
+                    if "active" in msg.payload:
+                        active = bool(msg.payload["active"])
+                        self.dhw_active.labels(
+                            dhw_idx=dhw_idx,
+                            controller_id=controller_id,
+                            controller_name=controller_name
+                        ).set(1 if active else 0)
+                        logger.debug(
+                            f"Updated DHW active state for {dhw_idx}: {'ACTIVE' if active else 'INACTIVE'}"
+                        )
+                    
+                    if "mode" in msg.payload:
+                        mode = str(msg.payload["mode"])
+                        # Clear previous mode entries for this DHW
+                        # Note: Prometheus doesn't have a clean way to clear old labels,
+                        # but setting to 1 for current mode is the standard pattern
+                        self.dhw_mode.labels(
+                            dhw_idx=dhw_idx,
+                            controller_id=controller_id,
+                            controller_name=controller_name,
+                            mode=mode
+                        ).set(1)
+                        logger.debug(
+                            f"Updated DHW mode for {dhw_idx}: {mode}"
+                        )
+            
+            except (ValueError, TypeError, KeyError) as e:
+                logger.warning(f"Could not parse DHW message from payload: {e}")
 
         # Update active devices count
         if self.gateway and hasattr(self.gateway, "devices"):
