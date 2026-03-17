@@ -21,6 +21,7 @@ for Prometheus to scrape.
 - **Performance Metrics**: Measures processing duration and payload sizes
 - **Error Monitoring**: Counts and categorizes processing errors
 - **Prometheus Integration**: Standard HTTP metrics endpoint for scraping
+- **Device UI**: Human-friendly page at `/` listing devices seen on the bus, plus JSON at `/api/devices`
 
 ## Installation
 

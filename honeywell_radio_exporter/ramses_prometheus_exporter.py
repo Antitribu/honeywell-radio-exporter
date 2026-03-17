@@ -11,12 +11,20 @@ import json
 import logging
 import logging.handlers
 import os
+import socket
 import sys
+import threading
 import time
+
+# Earliest anchor for Python “process” uptime when OS start time isn’t available
+_PROCESS_UPTIME_FALLBACK_ANCHOR = time.time()
+
 from collections import defaultdict
-from datetime import datetime
+from datetime import datetime, timezone
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional, Type
+from urllib.parse import urlparse
 
 # Add the ramses_rf module to the path
 # Check environment variable first, then fall back to default path
@@ -36,9 +44,9 @@ from prometheus_client import (
     Histogram,
     Info,
     generate_latest,
-    start_http_server,
     REGISTRY,
 )
+from prometheus_client.exposition import CONTENT_TYPE_LATEST
 
 try:
     from ramses_rf import Gateway, Message, Code, I_, RP, RQ, W_
@@ -111,6 +119,364 @@ except (OSError, PermissionError) as e:
 logger = logging.getLogger(__name__)
 
 
+def _format_duration(seconds: float) -> str:
+    """Return a compact human string like '3h 12m', '42s'."""
+    if seconds is None or seconds < 0:
+        return ""
+    seconds = int(seconds)
+    mins, s = divmod(seconds, 60)
+    hrs, m = divmod(mins, 60)
+    days, h = divmod(hrs, 24)
+    parts = []
+    if days:
+        parts.append(f"{days}d")
+    if h:
+        parts.append(f"{h}h")
+    if m and not days:
+        parts.append(f"{m}m")
+    if not parts:
+        parts.append(f"{s}s")
+    return " ".join(parts)
+
+
+_py_process_start_unix: Optional[float] = None
+_py_process_start_is_os: bool = False
+
+
+def _get_python_process_start_unix() -> tuple[float, bool]:
+    """
+    Return (unix_start_time, is_os_accurate).
+    On Linux, uses /proc (true OS process start). Else falls back to first-call
+    anchor shortly after interpreter start (best effort).
+    """
+    global _py_process_start_unix, _py_process_start_is_os
+    if _py_process_start_unix is not None:
+        return _py_process_start_unix, _py_process_start_is_os
+    if sys.platform.startswith("linux"):
+        try:
+            boot = None
+            with open("/proc/stat", encoding="utf-8") as f:
+                for line in f:
+                    if line.startswith("btime "):
+                        boot = int(line.split()[1])
+                        break
+            if boot is None:
+                raise ValueError("no btime")
+            with open("/proc/self/stat", encoding="utf-8") as f:
+                s = f.read()
+            rp = s.rfind(")")
+            if rp < 0:
+                raise ValueError("bad stat")
+            rest = s[rp + 2 :].split()
+            starttime_ticks = int(rest[19])
+            hz = float(os.sysconf("SC_CLK_TCK"))
+            _py_process_start_unix = boot + starttime_ticks / hz
+            _py_process_start_is_os = True
+            return _py_process_start_unix, True
+        except (OSError, ValueError, IndexError, TypeError, ArithmeticError):
+            pass
+    _py_process_start_unix = _PROCESS_UPTIME_FALLBACK_ANCHOR
+    _py_process_start_is_os = False
+    return _py_process_start_unix, False
+
+
+def start_prometheus_http_services(port: int, exporter: "RamsesPrometheusExporter") -> None:
+    """
+    Verify the port is bindable, then start a background HTTP server for
+    /metrics (Prometheus), / (device UI), and /api/devices (JSON).
+    """
+    probe = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    try:
+        probe.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        probe.bind(("", port))
+    finally:
+        probe.close()
+
+    def serve() -> None:
+        try:
+            handler = _make_http_handler(exporter)
+            httpd = ThreadingHTTPServer(("0.0.0.0", port), handler)
+            exporter._http_server = httpd  # type: ignore[attr-defined]
+            logger.info(
+                "HTTP server listening on port %s — metrics /metrics, UI /, API /api/devices",
+                port,
+            )
+            httpd.serve_forever()
+        except Exception as e:
+            logger.error("HTTP server failed: %s", e)
+            raise
+
+    t = threading.Thread(target=serve, name="prometheus-ui-http", daemon=True)
+    t.start()
+
+
+def _make_http_handler(exporter: "RamsesPrometheusExporter") -> Type[BaseHTTPRequestHandler]:
+    """Build a request handler with a closure over the exporter instance."""
+
+    class ExporterHTTPRequestHandler(BaseHTTPRequestHandler):
+        def log_message(self, fmt: str, *args: Any) -> None:
+            logger.debug("%s - %s", self.address_string(), fmt % args)
+
+        def do_GET(self) -> None:
+            parsed = urlparse(self.path)
+            path = parsed.path or "/"
+            try:
+                if path == "/metrics":
+                    data = generate_latest(REGISTRY)
+                    self.send_response(200)
+                    self.send_header("Content-Type", CONTENT_TYPE_LATEST)
+                    self.send_header("Content-Length", str(len(data)))
+                    self.end_headers()
+                    self.wfile.write(data)
+                elif path in ("/", "/ui"):
+                    body = DEVICES_UI_HTML.encode("utf-8")
+                    self.send_response(200)
+                    self.send_header("Content-Type", "text/html; charset=utf-8")
+                    self.send_header("Content-Length", str(len(body)))
+                    self.end_headers()
+                    self.wfile.write(body)
+                elif path == "/api/devices":
+                    payload = exporter.get_devices_snapshot()
+                    body = json.dumps(payload, indent=2).encode("utf-8")
+                    self.send_response(200)
+                    self.send_header("Content-Type", "application/json; charset=utf-8")
+                    self.send_header("Cache-Control", "no-store")
+                    self.send_header("Content-Length", str(len(body)))
+                    self.end_headers()
+                    self.wfile.write(body)
+                else:
+                    self.send_error(404, "Not found")
+            except BrokenPipeError:
+                pass
+            except Exception as e:
+                logger.exception("HTTP handler error: %s", e)
+                try:
+                    self.send_error(500, str(e))
+                except Exception:
+                    pass
+
+    return ExporterHTTPRequestHandler
+
+
+# Single-page UI: lists devices seen on the radio bus; details on row click.
+DEVICES_UI_HTML = r"""<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Honeywell RAMSES — devices</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --panel: #1e293b;
+      --border: #334155;
+      --text: #e2e8f0;
+      --muted: #94a3b8;
+      --accent: #38bdf8;
+      --ok: #4ade80;
+      --warn: #fbbf24;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: ui-sans-serif, system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      margin: 0;
+      padding: 1rem 1.25rem 2rem;
+      line-height: 1.45;
+    }
+    h1 { font-size: 1.35rem; font-weight: 600; margin: 0 0 0.25rem; }
+    .sub { color: var(--muted); font-size: 0.875rem; margin-bottom: 1rem; }
+    .sub a { color: var(--accent); }
+    .toolbar { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; margin-bottom: 1rem; }
+    .status { font-size: 0.8rem; color: var(--muted); }
+    button {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 0.4rem 0.75rem;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.875rem;
+    }
+    button:hover { border-color: var(--accent); }
+    table { width: 100%; border-collapse: collapse; font-size: 0.875rem; table-layout: auto; }
+    th, td { text-align: left; padding: 0.55rem 0.65rem; border-bottom: 1px solid var(--border); }
+    th { background: var(--panel); color: var(--muted); font-weight: 500; position: sticky; top: 0; }
+    tr:hover td { background: rgba(56, 189, 248, 0.06); cursor: pointer; }
+    tr.selected td { background: rgba(56, 189, 248, 0.12); }
+    .badge { display: inline-block; padding: 0.12rem 0.45rem; border-radius: 999px; font-size: 0.7rem; font-weight: 500; }
+    .badge-boiler { background: #7c3aed33; color: #c4b5fd; }
+    .badge-ctl { background: #0ea5e933; color: #7dd3fc; }
+    .mono { font-family: ui-monospace, monospace; font-size: 0.8rem; }
+    #detail {
+      margin-top: 1.25rem;
+      padding: 1rem;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      display: none;
+    }
+    #detail.visible { display: block; }
+    #detail h2 { margin: 0 0 0.5rem; font-size: 1rem; }
+    pre {
+      margin: 0;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-size: 0.78rem;
+      color: var(--muted);
+    }
+    .fresh { color: var(--ok); }
+    .stale { color: var(--warn); }
+    tr.placeholder-row td { opacity: 0.85; font-style: italic; }
+    tr.placeholder-row td.mono { font-style: normal; }
+  </style>
+</head>
+<body>
+  <h1>Devices on the bus</h1>
+  <p class="sub">
+    Data from the Honeywell RAMSES radio exporter ·
+    <a href="/metrics">Prometheus metrics</a> ·
+    <a href="/api/devices">JSON API</a><span id="process-uptime-inline"></span>
+    <br />
+    <span id="uptime-header"></span>
+  </p>
+  <div class="toolbar">
+    <button type="button" id="refresh">Refresh</button>
+    <span class="status" id="status"></span>
+  </div>
+  <table>
+    <thead>
+      <tr>
+        <th>Device ID</th>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Zone</th>
+        <th>Temp °C</th>
+        <th>Setpoint °C</th>
+        <th>From (msg / ack)</th>
+        <th>To (msg / ack)</th>
+        <th>Last seen</th>
+      </tr>
+    </thead>
+    <tbody id="rows"></tbody>
+  </table>
+  <div id="detail">
+    <h2 id="detail-title">Details</h2>
+    <pre id="detail-json"></pre>
+  </div>
+  <script>
+    const STALE_SEC = 300;
+    function fmtTime(iso, unix) {
+      if (!iso && unix == null) return "—";
+      if (iso) {
+        try { return new Date(iso).toLocaleString(); } catch (e) { return iso; }
+      }
+      return new Date(unix * 1000).toLocaleString();
+    }
+    function ageClass(unix) {
+      if (unix == null) return "";
+      const s = Date.now() / 1000 - unix;
+      return s <= STALE_SEC ? "fresh" : "stale";
+    }
+    function roleBadges(d) {
+      const b = [];
+      if (d.is_boiler) b.push('<span class="badge badge-boiler">boiler / BDR</span>');
+      if (d.is_controller) b.push('<span class="badge badge-ctl">01:</span>');
+      return b.length ? " " + b.join(" ") : "";
+    }
+    function fmtNum(v) {
+      if (v == null || v === "") return "—";
+      const n = Number(v);
+      return Number.isFinite(n) ? n.toFixed(1) : "—";
+    }
+    let selectedId = null;
+    function render(devices, meta) {
+      const tb = document.getElementById("rows");
+      tb.innerHTML = "";
+      const sorted = [...devices].sort((a, b) => (a.device_id || "").localeCompare(b.device_id || ""));
+      for (const d of sorted) {
+        const tr = document.createElement("tr");
+        tr.dataset.id = d.device_id;
+        if (selectedId === d.device_id) tr.classList.add("selected");
+        if (d.is_placeholder) tr.classList.add("placeholder-row");
+        const zone = (d.zone_name && d.zone_name !== "unknown")
+          ? d.zone_name + " <span class='mono'>(" + (d.zone_idx || "") + ")</span>"
+          : (d.zone_idx && d.zone_idx !== "unknown" ? "<span class='mono'>" + d.zone_idx + "</span>" : "—");
+        tr.innerHTML =
+          "<td class='mono'>" + (d.device_id || "") + roleBadges(d) + "</td>" +
+          "<td>" + ((d.is_placeholder && (!d.name || d.name === "unknown"))
+            ? "— <span class='badge' title='Only seen as bus destination so far'>placeholder</span>"
+            : (d.name && d.name !== "unknown" ? d.name : "—")) + "</td>" +
+          "<td>" + (d.device_type || d.slug || "—") + "</td>" +
+          "<td>" + zone + "</td>" +
+          "<td class='mono'>" + fmtNum(d.temperature_c) + "</td>" +
+          "<td class='mono'>" + fmtNum(d.setpoint_c) + "</td>" +
+          "<td class='mono'>" + (d.messages_from ?? d.messages_as_source ?? 0) + " / " + (d.acks_from ?? 0) + "</td>" +
+          "<td class='mono'>" + (d.messages_to ?? 0) + " / " + (d.acks_to ?? 0) + "</td>" +
+          "<td class='" + ageClass(d.last_seen_unix) + "'>" + fmtTime(d.last_seen_iso, d.last_seen_unix) + "</td>";
+        tr.addEventListener("click", () => {
+          selectedId = d.device_id;
+          document.querySelectorAll("tr.selected").forEach(r => r.classList.remove("selected"));
+          tr.classList.add("selected");
+          const det = document.getElementById("detail");
+          document.getElementById("detail-title").textContent = d.device_id || "Device";
+          document.getElementById("detail-json").textContent = JSON.stringify(d, null, 2);
+          det.classList.add("visible");
+        });
+        tb.appendChild(tr);
+      }
+      const metaEl = document.getElementById("meta");
+      const headerEl = document.getElementById("uptime-header");
+      if (metaEl) {
+        const bits = [];
+        if (meta && typeof meta.device_count === "number") {
+          bits.push(meta.device_count + " devices total");
+        }
+        if (meta && meta.uptime_human) {
+          bits.push("exporter " + meta.uptime_human);
+        }
+        if (meta && meta.python_process_uptime_human) {
+          bits.push("python " + meta.python_process_uptime_human);
+        }
+        metaEl.textContent = bits.join(" · ");
+      }
+      if (headerEl) {
+        headerEl.textContent = meta && meta.uptime_human ? "- exporter running " + meta.uptime_human : "";
+      }
+      const procInline = document.getElementById("process-uptime-inline");
+      if (procInline) {
+        if (meta && meta.python_process_uptime_human) {
+          const approx = meta.python_process_uptime_os_accurate ? "" : " (approx.)";
+          procInline.textContent = " · - Python process up " + meta.python_process_uptime_human + approx;
+        } else {
+          procInline.textContent = "";
+        }
+      }
+    }
+    async function load() {
+      const el = document.getElementById("status");
+      el.textContent = "Loading…";
+      try {
+        const r = await fetch("/api/devices", { cache: "no-store" });
+        if (!r.ok) throw new Error(r.status);
+        const data = await r.json();
+        render(data.devices || [], data);
+        el.textContent = "Updated " + new Date().toLocaleTimeString() + " · " + (data.devices || []).length + " devices";
+      } catch (e) {
+        el.textContent = "Error: " + e.message;
+      }
+    }
+    document.getElementById("refresh").addEventListener("click", load);
+    load();
+    setInterval(load, 15000);
+  </script>
+  <div class="status" id="meta"></div>
+</body>
+</html>
+"""
+
+
 class RamsesPrometheusExporter:
     """Prometheus exporter for RAMSES RF messages."""
 
@@ -142,6 +508,174 @@ class RamsesPrometheusExporter:
         # Zone to device mapping tracking from zone_devices messages
         # Structure: {zone_idx: {device_role: [device_ids]}}
         self.zone_devices_map = defaultdict(lambda: defaultdict(list))
+
+        # Devices seen on the bus (for human UI /api/devices)
+        self._devices_lock = threading.Lock()
+        self.device_activity: Dict[str, float] = {}  # device_id -> last activity (src or dst)
+        self.device_src_message_count: Dict[str, int] = defaultdict(int)
+        self.device_dest_message_count: Dict[str, int] = defaultdict(int)
+        self.device_src_ack_count: Dict[str, int] = defaultdict(int)
+        self.device_dest_ack_count: Dict[str, int] = defaultdict(int)
+        self.device_last_temperature_c: Dict[str, float] = {}
+        self.device_last_setpoint_c: Dict[str, float] = {}
+        self._http_server: Optional[ThreadingHTTPServer] = None
+
+    def _record_device_temperature_c(self, device_id: str, value: float) -> None:
+        if not device_id or device_id == "unknown":
+            return
+        with self._devices_lock:
+            self.device_last_temperature_c[device_id] = round(float(value), 2)
+
+    def _record_device_setpoint_c(self, device_id: str, value: float) -> None:
+        if not device_id or device_id == "unknown":
+            return
+        with self._devices_lock:
+            self.device_last_setpoint_c[device_id] = round(float(value), 2)
+
+    def _touch_device_on_bus(self, device_id: str) -> None:
+        """Record that this device appeared as source or destination."""
+        if not device_id or device_id == "unknown":
+            return
+        with self._devices_lock:
+            self.device_activity[device_id] = time.time()
+
+    def _count_source_message(self, source_device: str) -> None:
+        if not source_device or source_device == "unknown":
+            return
+        with self._devices_lock:
+            self.device_src_message_count[source_device] += 1
+
+    def _count_dest_message(self, dest_device: str) -> None:
+        if not dest_device or dest_device == "unknown":
+            return
+        with self._devices_lock:
+            self.device_dest_message_count[dest_device] += 1
+
+    def _count_ack_for_devices(self, source_device: str, dest_device: str, verb: str) -> None:
+        """Track simple per-device 'ack' counts based on RP replies."""
+        if verb != "RP":
+            return
+        with self._devices_lock:
+            if source_device and source_device != "unknown":
+                self.device_src_ack_count[source_device] += 1
+            if dest_device and dest_device != "unknown":
+                self.device_dest_ack_count[dest_device] += 1
+
+    def _gateway_device_info(self, device_id: str) -> Dict[str, Any]:
+        """Extra fields from the live gateway model (if any)."""
+        out: Dict[str, Any] = {}
+        if not self.gateway:
+            return out
+        try:
+            dev = self.gateway.device_by_id.get(device_id)
+            if not dev:
+                return out
+            slug = getattr(dev, "_SLUG", None) or getattr(dev, "type", None)
+            if slug:
+                out["slug"] = str(slug)
+            traits = dev.traits if hasattr(dev, "traits") else {}
+            if isinstance(traits, dict):
+                if traits.get("alias"):
+                    out["alias"] = traits["alias"]
+                if traits.get("class"):
+                    out["traits_class"] = traits["class"]
+        except (AttributeError, KeyError, TypeError):
+            pass
+        return out
+
+    def get_devices_snapshot(self) -> Dict[str, Any]:
+        """Structured list of known devices for the web UI and /api/devices."""
+        ids: set = set()
+        with self._devices_lock:
+            ids.update(self.device_activity.keys())
+            ids.update(self.device_name_cache.keys())
+            src_counts = dict(self.device_src_message_count)
+            dst_counts = dict(self.device_dest_message_count)
+            src_acks = dict(self.device_src_ack_count)
+            dst_acks = dict(self.device_dest_ack_count)
+            activity = dict(self.device_activity)
+            temps = dict(self.device_last_temperature_c)
+            setpoints = dict(self.device_last_setpoint_c)
+        ids.update(dst_counts.keys())
+        if self.gateway:
+            db = getattr(self.gateway, "device_by_id", None)
+            if isinstance(db, dict):
+                ids.update(k for k in db if isinstance(k, str))
+        for roles in self.zone_devices_map.values():
+            for dev_list in roles.values():
+                ids.update(dev_list)
+
+        devices: List[Dict[str, Any]] = []
+        now = time.time()
+        proc_start, proc_os = _get_python_process_start_unix()
+        proc_uptime = now - proc_start
+        for device_id in sorted(ids):
+            if not device_id or device_id == "unknown":
+                continue
+            zone_idx = self._get_zone_for_device(device_id)
+            zone_name = self._get_zone_name(zone_idx) if zone_idx != "unknown" else "unknown"
+            name = self._get_device_name(device_id)
+            gw = self._gateway_device_info(device_id)
+            last_unix = activity.get(device_id)
+            last_iso: Optional[str] = None
+            if last_unix is not None:
+                last_iso = datetime.fromtimestamp(last_unix, tz=timezone.utc).isoformat()
+            is_boiler = device_id.startswith("13:") or device_id.startswith("10:")
+            is_controller = device_id.startswith("01:")
+            msg_from = int(src_counts.get(device_id, 0))
+            msg_to = int(dst_counts.get(device_id, 0))
+            ack_from = int(src_acks.get(device_id, 0))
+            ack_to = int(dst_acks.get(device_id, 0))
+            on_gw = bool(
+                self.gateway
+                and isinstance(getattr(self.gateway, "device_by_id", None), dict)
+                and device_id in self.gateway.device_by_id
+            )
+            in_name_cache = device_id in self.device_name_cache
+            is_placeholder = msg_from == 0 and msg_to > 0 and not on_gw and not in_name_cache
+            devices.append(
+                {
+                    "device_id": device_id,
+                    "name": name,
+                    "zone_idx": zone_idx,
+                    "zone_name": zone_name,
+                    "last_seen_unix": last_unix,
+                    "last_seen_iso": last_iso,
+                    "seconds_since_seen": round(now - last_unix, 1) if last_unix is not None else None,
+                    "messages_from": msg_from,
+                    "messages_to": msg_to,
+                    "acks_from": ack_from,
+                    "acks_to": ack_to,
+                    "messages_as_source": msg_from,
+                    "is_placeholder": is_placeholder,
+                    "is_boiler": is_boiler,
+                    "is_controller": is_controller,
+                    "device_type": gw.get("traits_class") or gw.get("slug"),
+                    "slug": gw.get("slug"),
+                    "alias": gw.get("alias"),
+                    "on_gateway": on_gw,
+                    "temperature_c": temps.get(device_id),
+                    "setpoint_c": setpoints.get(device_id),
+                }
+            )
+        return {
+            "generated_at": datetime.now(timezone.utc).isoformat(),
+            "started_at": datetime.fromtimestamp(self.started_at, tz=timezone.utc).isoformat()
+            if getattr(self, "started_at", None) is not None
+            else None,
+            "uptime_seconds": round(now - self.started_at, 1)
+            if getattr(self, "started_at", None) is not None
+            else None,
+            "uptime_human": _format_duration(now - self.started_at)
+            if getattr(self, "started_at", None) is not None
+            else None,
+            "python_process_started_at": datetime.fromtimestamp(proc_start, tz=timezone.utc).isoformat(),
+            "python_process_uptime_seconds": round(proc_uptime, 1),
+            "python_process_uptime_human": _format_duration(proc_uptime),
+            "python_process_uptime_os_accurate": proc_os,
+            "device_count": len(devices),
+            "devices": devices,
+        }
 
     def _setup_metrics(self):
         """Initialize Prometheus metrics."""
@@ -686,6 +1220,12 @@ class RamsesPrometheusExporter:
         source_device = str(msg.src.id) if msg.src and hasattr(msg.src, "id") else "unknown"
         dest_device = str(msg.dst.id) if msg.dst and hasattr(msg.dst, "id") else "unknown"
 
+        self._touch_device_on_bus(source_device)
+        self._touch_device_on_bus(dest_device)
+        self._count_source_message(source_device)
+        self._count_dest_message(dest_device)
+        self._count_ack_for_devices(source_device, dest_device, verb)
+
         # Update device last seen timestamp for source device (message sender)
         if source_device != "unknown":
             device_name = self._get_device_name(source_device)
@@ -816,7 +1356,8 @@ class RamsesPrometheusExporter:
                         device_name=device_name,
                         zone_name=zone_name
                     ).set(temperature)
-                    
+                    self._record_device_temperature_c(source_device, temperature)
+
                     logger.debug(
                         f"Updated temperature for device {source_device} ({device_name}) "
                         f"in zone {zone_name}: {temperature}°C"
@@ -840,7 +1381,8 @@ class RamsesPrometheusExporter:
                         zone_idx=zone_idx,
                         zone_name=zone_name
                     ).set(setpoint)
-                    
+                    self._record_device_setpoint_c(source_device, setpoint)
+
                     logger.debug(
                         f"Updated setpoint for device {source_device} ({device_name}) "
                         f"zone {zone_idx} ({zone_name}): {setpoint}°C"
@@ -1031,6 +1573,7 @@ class RamsesPrometheusExporter:
                     self.boiler_setpoint.labels(
                         boiler_id=source_device, boiler_name=boiler_name
                     ).set(setpoint)
+                    self._record_device_setpoint_c(source_device, setpoint)
 
                     logger.debug(
                         f"Updated boiler setpoint for {source_device} ({boiler_name}): {setpoint}°C"
@@ -1108,6 +1651,7 @@ class RamsesPrometheusExporter:
                             controller_id=controller_id,
                             controller_name=controller_name
                         ).set(temperature)
+                        self._record_device_temperature_c(controller_id, temperature)
                         logger.debug(
                             f"Updated DHW temperature for {dhw_idx}: {temperature:.2f}°C"
                         )
@@ -1122,6 +1666,7 @@ class RamsesPrometheusExporter:
                             controller_id=controller_id,
                             controller_name=controller_name
                         ).set(setpoint)
+                        self._record_device_setpoint_c(controller_id, setpoint)
                         logger.debug(
                             f"Updated DHW setpoint for {dhw_idx}: {setpoint:.2f}°C"
                         )
@@ -1182,11 +1727,13 @@ class RamsesPrometheusExporter:
         return dict(self.device_communications)
 
     async def start_prometheus_server(self):
-        """Start the Prometheus HTTP server."""
+        """Start HTTP server: Prometheus /metrics, device UI /, JSON /api/devices."""
         try:
-            start_http_server(self.port)
-            logger.info(f"Prometheus HTTP server started on port {self.port}")
-            logger.info(f"Metrics available at http://localhost:{self.port}/metrics")
+            start_prometheus_http_services(self.port, self)
+            logger.info(
+                "Open http://localhost:%s/ for device UI; metrics at /metrics",
+                self.port,
+            )
         except Exception as e:
             logger.error(f"Failed to start Prometheus server: {e}")
             raise

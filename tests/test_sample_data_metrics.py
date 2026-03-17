@@ -57,7 +57,7 @@ def test_sample_data_metrics_generation():
     if test_cache_file.exists():
         test_cache_file.unlink()
 
-    with patch("honeywell_radio_exporter.ramses_prometheus_exporter.start_http_server"):
+    with patch("honeywell_radio_exporter.ramses_prometheus_exporter.start_prometheus_http_services"):
         exporter = RamsesPrometheusExporter(
             port=8000,
             ramses_port="/dev/ttyUSB0",

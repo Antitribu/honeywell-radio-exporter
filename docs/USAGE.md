@@ -79,6 +79,8 @@ venv/bin/python -m honeywell_radio_exporter --ramses-port /dev/ttyUSB0
 venv/bin/python -m honeywell_radio_exporter --port 8000
 # Then in another terminal:
 curl http://localhost:8000/metrics
+# Device list (browser): http://localhost:8000/
+# Same data as JSON: curl http://localhost:8000/api/devices
 ```
 
 ## Finding Your USB Device
@@ -102,6 +104,7 @@ sudo usermod -a -G dialout $USER
    ```bash
    curl http://localhost:8000/metrics
    ```
+1. **Device UI**: open `http://localhost:8000/` or `curl http://localhost:8000/api/devices`
 1. **Check Prometheus metrics**: Look for metrics like:
    - `ramses_messages_total`
    - `ramses_message_types_total`

@@ -77,6 +77,24 @@ class TestRamsesPrometheusExporter:
         assert exporter.port == 8000
         assert exporter.ramses_port == "/dev/ttyUSB0"
 
+    def test_get_devices_snapshot(self):
+        """UI/API device list includes source and destination from traffic."""
+        exporter = RamsesPrometheusExporter(port=8000)
+        exporter._capture_message_metrics(
+            MockMessage("0001", "I", "01:111111", "04:222222")
+        )
+        snap = exporter.get_devices_snapshot()
+        assert snap["device_count"] >= 2
+        by_id = {d["device_id"]: d for d in snap["devices"]}
+        assert "01:111111" in by_id
+        assert "04:222222" in by_id
+        assert by_id["01:111111"]["messages_from"] >= 1
+        assert by_id["01:111111"]["messages_to"] == 0
+        assert by_id["01:111111"]["is_controller"] is True
+        assert by_id["04:222222"]["messages_from"] == 0
+        assert by_id["04:222222"]["messages_to"] >= 1
+        assert by_id["04:222222"]["is_placeholder"] is True
+
     def test_capture_message_metrics(self):
         """Test that message metrics are captured correctly."""
         exporter = RamsesPrometheusExporter()
@@ -172,21 +190,19 @@ class TestRamsesPrometheusExporter:
         """Test that Prometheus server starts correctly."""
         exporter = RamsesPrometheusExporter(port=8002)
 
-        # Mock the start_http_server function
         with patch(
-            "honeywell_radio_exporter.ramses_prometheus_exporter.start_http_server"
+            "honeywell_radio_exporter.ramses_prometheus_exporter.start_prometheus_http_services"
         ) as mock_start:
             await exporter.start_prometheus_server()
-            mock_start.assert_called_once_with(8002)
+            mock_start.assert_called_once_with(8002, exporter)
 
     @pytest.mark.asyncio
     async def test_start_prometheus_server_error(self):
         """Test that errors in starting Prometheus server are handled."""
         exporter = RamsesPrometheusExporter(port=8003)
 
-        # Mock the start_http_server function to raise an exception
         with patch(
-            "honeywell_radio_exporter.ramses_prometheus_exporter.start_http_server"
+            "honeywell_radio_exporter.ramses_prometheus_exporter.start_prometheus_http_services"
         ) as mock_start:
             mock_start.side_effect = Exception("Server error")
 
