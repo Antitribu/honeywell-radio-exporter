@@ -97,6 +97,18 @@ When the exporter is running:
 
 The `zones` and `devices` tables in the UI are backed by MySQL and updated as messages arrive.
 
+## UI screenshots (censored)
+
+These screenshots were taken from `GET /ui/` and **name-bearing columns were blurred** so you can publish them safely.
+
+### Zones
+
+![Zones table (censored)](docs/ui_zones_censored.png)
+
+### Devices
+
+![Devices table (censored)](docs/ui_devices_censored.png)
+
 ## Docker
 
 See `docs/README.docker.md`.
