@@ -19,7 +19,7 @@ def test_device_name_labels_in_metrics():
 
     # Should have device_name labels in metrics
     assert 'device_name="' in content, "device_name label should exist in metrics"
-    
+
     # Check that key metrics have these labels
     metrics_to_check = [
         "ramses_device_temperature_celsius",
@@ -29,7 +29,7 @@ def test_device_name_labels_in_metrics():
     for metric in metrics_to_check:
         lines = [line for line in content.split("\n") if line.startswith(metric + "{")]
         assert len(lines) > 0, f"Should have {metric} metrics"
-        
+
         # All these metrics should have device_name labels
         for line in lines:
             assert 'device_name="' in line, f"Missing device_name in {metric}: {line}"
@@ -111,7 +111,9 @@ def test_no_old_device_info_metric():
         content = f.read()
 
     # Should NOT have ramses_device_info metrics anymore
-    assert "ramses_device_info" not in content, "Old ramses_device_info metric should not exist"
+    assert (
+        "ramses_device_info" not in content
+    ), "Old ramses_device_info metric should not exist"
 
     print("✓ Old device_info metric has been removed")
 

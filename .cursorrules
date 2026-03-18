@@ -1,5 +1,13 @@
 # Cursor Rules for Honeywell Radio Exporter Project
 
+## General instructions
+
+* This is a python project and everything should be written in python.
+* It will only ever run on linux.
+* When files are changed the program will reload if it's running in dev mode
+* Docs other than readme should always be in the docs/ directory
+* Any commits should be an sanitised of personal names. (check ~/.personal_names for a list of names to sanitise)
+
 ## Code Quality Requirements
 
 ### Always run tox before completing tasks

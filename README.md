@@ -1,3 +1,147 @@
+# Honeywell Radio Exporter
+
+## Disclosure
+
+Vibe coded hot mess, done to help me debug why all my HR91 decided to drop off the system. No warranty, no guarantees.
+
+## Description
+
+Multithreaded monitor for Honeywell RAMSES RF:
+USB watcher → queue → MySQL consumer (with retention janitor) → Prometheus metrics + web UI/API backed by the database.
+
+> Note: This repo has seen a lot of “workflow experiments”. Behavior can evolve as features are refactored. If something looks surprising, check the latest docs under `docs/`.
+
+## What you get
+
+1. Persistent storage in MySQL (`messages`, `devices`, `zones`, etc.) with versioned schema migrations (`db_migration.py`).
+2. Prometheus endpoint: `GET /metrics`
+3. Web UI: `GET /ui/`
+4. JSON API: `GET /api/devices`
+5. Live events SSE: `GET /api/events`
+
+## Prerequisites
+
+- Python `>= 3.11`
+- A working RAMSES RF gateway USB device (HGI80 or ESP32/evofw3) accessible on your host
+- The `ramses_rf` Python package available at `/home/simon/src/3rd-party/ramses_rf` (or set `RAMSES_RF_PATH`)
+- MySQL reachable from this host
+
+## MySQL credentials
+
+Create a file named `.mysql_creds` in the project root (this file is intended to be gitignored), e.g.:
+
+```text
+host=127.0.0.1
+port=3306
+user=myuser
+password=secret
+database=honeywell_rf
+```
+
+The app will create the database (if missing) and apply migrations on startup.
+
+## Install (development)
+
+```bash
+cd /home/simon/src/development/honeywell-radio-exporter
+python3 -m venv .venv
+source .venv/bin/activate
+
+pip install -e .
+# Optional, for lint/test tooling:
+pip install -e ".[dev]" || true
+```
+
+## Quick start (run against real RF hardware)
+
+```bash
+source .venv/bin/activate
+
+# Start watcher + consumer + HTTP server
+python -m honeywell_radio_exporter --ramses-port /dev/ttyACM0
+
+# Optional: change HTTP port
+python -m honeywell_radio_exporter --ramses-port /dev/ttyACM0 --port 8000
+
+# Optional: extra logs
+python -m honeywell_radio_exporter --ramses-port /dev/ttyACM0 --log-level DEBUG
+```
+
+If you want to run without attaching the USB watcher (DB consumer still runs):
+
+```bash
+python -m honeywell_radio_exporter --no-device
+```
+
+## Command line options
+
+```text
+--port PORT              HTTP port (default: 8000): /ui/, /metrics/, /api/devices
+--host ADDR              Bind address (default: 0.0.0.0 = all interfaces)
+--ramses-port DEVICE     RAMSES RF serial device (default: /dev/ttyACM0)
+--gateway-type auto|hgi80|evofw3
+--no-device              Do not start USB watcher
+--log-level LEVEL        DEBUG, INFO, WARNING, ERROR (default: INFO)
+```
+
+For the full “how to run” guide, see `docs/USAGE.md`.
+
+## UI and API
+
+When the exporter is running:
+
+- UI: `http://localhost:8000/ui/`
+- API: `http://localhost:8000/api/devices`
+- Metrics: `http://localhost:8000/metrics/`
+- Events (SSE): `http://localhost:8000/api/events`
+
+The `zones` and `devices` tables in the UI are backed by MySQL and updated as messages arrive.
+
+## Docker
+
+See `docs/README.docker.md`.
+
+## Systemd service
+
+See `docs/ramses-prometheus-exporter.service`.
+
+## Development workflow
+
+For fast “edit → restart” cycles:
+
+```bash
+./scripts/dev.sh --ramses-port /dev/ttyACM0 --port 8000
+```
+
+`dev.sh` watches for file changes and restarts the exporter. If you see `OSError: [Errno 98] Address already in use`, the script will proactively kill anything bound to the selected `--port` before starting again.
+
+## Tests and quality checks
+
+The repo uses `tox`:
+
+```bash
+tox -e format
+tox -e format-check
+tox -e lint
+tox -e test-no-cov
+```
+
+Or run tests directly:
+
+```bash
+pytest tests/ -v
+```
+
+## Documentation index
+
+- `docs/USAGE.md` (runbook / CLI options / troubleshooting)
+- `docs/CACHE_DOCUMENTATION.md` (zone/device name caching)
+- `docs/DASHBOARD_UPDATES.md` (Grafana dashboard changes)
+- `docs/ZONE_DEVICE_MAPPING.md` and `docs/ZONE_DEVICE_MAPPING_CHANGELOG.md`
+- `docs/README.docker.md`
+- `docs/SUMMARY.md`
+- `docs/scripts/README.md` (Grafana dashboard uploader helper)
+
 # Warning
 
 ______________________________________________________________________
@@ -10,18 +154,37 @@ ______________________________________________________________________
 
 # Honeywell Radio Exporter
 
-A Python module that uses the `ramses_rf` library to listen to RAMSES RF messages and expose metrics
-for Prometheus to scrape.
+Multithreaded monitor for Honeywell RAMSES RF: USB watcher → queue → MySQL consumer, janitor for
+retention, Prometheus + web UI backed by the database.
 
 ## Features
 
-- **Message Tracking**: Counts and categorizes all RAMSES RF messages by type, verb, and code
-- **Device Communication**: Monitors communications between different devices
-- **System State**: Tracks active devices, message rates, and timestamps
-- **Performance Metrics**: Measures processing duration and payload sizes
-- **Error Monitoring**: Counts and categorizes processing errors
-- **Prometheus Integration**: Standard HTTP metrics endpoint for scraping
-- **Device UI**: Human-friendly page at `/` listing devices seen on the bus, plus JSON at `/api/devices`
+- **Watcher thread**: `ramses_rf` gateway, internal queue, raw rotating logs under `logs/raw_messages/`
+- **Consumer thread**: validates messages, persists to MySQL (`messages`, `devices`, `zones`, `message_code_counts`, `fault_log_entries`, `puzzle_version_events`, `boiler_status` for OpenTherm `10:` gateways)
+- **Janitor**: drops messages older than 24h, devices unseen for 4 weeks
+- **`db_migration.py`**: versioned schema on startup (see `schema_migrations`)
+- **Prometheus**: `/metrics/` — gauges refreshed from DB on each scrape
+- **Web UI**: `/` → `/ui/` — zones table, message-type counts, devices; `/api/devices` JSON (includes `zones`, `message_code_counts`)
+- **Legacy**: `ramses_prometheus_exporter.py` remains for reference; entrypoint is `honeywell_radio_exporter.app:main`
+
+## MySQL credentials
+
+Create **`.mysql_creds`** in the project root (gitignored), one key per line:
+
+```text
+host=127.0.0.1
+port=3306
+user=myuser
+password=secret
+database=honeywell_rf
+```
+
+The app creates the database if needed and applies migrations on startup.
+
+## Logs
+
+- `logs/messages.log` — application / validation logging (10MB × 5). On each start, the previous file is rotated to `messages.log.1` (unless `LOG_ROTATE_ON_START=0`).
+- `logs/raw_messages/raw_messages.log` — one line per bus message (100MB × 5); **no** startup rotation (append); still rotates by size when full.
 
 ## Installation
 
@@ -30,6 +193,7 @@ for Prometheus to scrape.
 - Python 3.11 or higher
 - A USB-to-RF device (Honeywell HGI80 or ESP32 with evofw3 firmware)
 - The `ramses_rf` module available at `/home/simon/src/3rd-party/ramses_rf`
+- For a **Honeywell HGI80** on `/dev/ttyACM0`, use **`--gateway-type hgi80`** (or **`RAMSES_GATEWAY_TYPE=hgi80`**) if you see “gateway type is not determinable” — otherwise ramses_rf assumes evofw3.
 
 ### Development Setup
 
@@ -55,20 +219,19 @@ for Prometheus to scrape.
 
 ## Testing
 
-### Running Tests with Tox
+Use **tox** (includes **black** via `tox -e format` / `format-check`).
 
-The project uses `tox` for comprehensive testing across multiple Python versions and tools:
+MySQL integration tests (`tests/test_db_migration.py`) are skipped unless you set e.g.
+`MYSQL_TEST_HOST=127.0.0.1` and optional `MYSQL_TEST_USER`, `MYSQL_TEST_PASSWORD`,
+`MYSQL_TEST_DATABASE` (default `honeywell_exporter_test`).
+
+Legacy tests that targeted the old monolithic exporter are skipped by default.
 
 ```bash
-# Run all test environments
-tox
-
-# Run specific environments
-tox -e py311          # Python 3.11 tests
-tox -e lint           # Linting checks
-tox -e format         # Code formatting checks
-tox -e security       # Security checks
-tox -e coverage       # Coverage report
+tox -e format          # apply black (line length 100)
+tox -e format-check
+tox -e test-no-cov     # pytest
+tox -e lint
 ```
 
 ### Running Tests Manually

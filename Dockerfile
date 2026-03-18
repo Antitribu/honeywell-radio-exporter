@@ -33,7 +33,7 @@ RUN pip install --no-cache-dir .
 FROM python:3.11-slim
 
 # Metadata labels
-LABEL maintainer="Simon <simon@example.com>" \
+LABEL maintainer="Honeywell Radio Exporter <simon-honeywellradioexporter@think.io>" \
       org.opencontainers.image.title="honeywell-radio-exporter" \
       org.opencontainers.image.description="RAMSES RF Prometheus Exporter" \
       org.opencontainers.image.version="${VERSION:-1.0.0}" \

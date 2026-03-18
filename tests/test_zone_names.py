@@ -32,7 +32,7 @@ def test_zone_name_labels_in_metrics():
     for metric in metrics_to_check:
         lines = [line for line in content.split("\n") if line.startswith(metric + "{")]
         assert len(lines) > 0, f"Should have {metric} metrics"
-        
+
         # All these metrics should have zone_name labels
         for line in lines:
             assert 'zone_name="' in line, f"Missing zone_name in {metric}: {line}"
@@ -59,7 +59,9 @@ def test_zone_names_populated_correctly():
 
     # Should have at least a few real zones (not all unknown)
     real_zones = [name for name in zone_names if name != "unknown"]
-    assert len(real_zones) >= 4, f"Should have at least 4 named zones, found {len(real_zones)}"
+    assert (
+        len(real_zones) >= 4
+    ), f"Should have at least 4 named zones, found {len(real_zones)}"
 
     print(f"\n✓ {len(real_zones)} zones have real names (not 'unknown')")
 
@@ -117,10 +119,11 @@ def test_metrics_structure_consistent():
 
     # Check temperature metrics
     temp_lines = [
-        line for line in content.split("\n") 
+        line
+        for line in content.split("\n")
         if line.startswith("ramses_device_temperature_celsius{")
     ]
-    
+
     assert len(temp_lines) > 0, "Should have temperature metrics"
 
     for line in temp_lines:
@@ -133,10 +136,11 @@ def test_metrics_structure_consistent():
 
     # Check setpoint metrics
     setpoint_lines = [
-        line for line in content.split("\n") 
+        line
+        for line in content.split("\n")
         if line.startswith("ramses_device_setpoint_celsius{")
     ]
-    
+
     assert len(setpoint_lines) > 0, "Should have setpoint metrics"
 
     for line in setpoint_lines:
@@ -150,10 +154,9 @@ def test_metrics_structure_consistent():
 
     # Check heat demand metrics
     heat_demand_lines = [
-        line for line in content.split("\n") 
-        if line.startswith("ramses_heat_demand{")
+        line for line in content.split("\n") if line.startswith("ramses_heat_demand{")
     ]
-    
+
     assert len(heat_demand_lines) > 0, "Should have heat demand metrics"
 
     for line in heat_demand_lines:
@@ -163,7 +166,9 @@ def test_metrics_structure_consistent():
         assert 'zone_idx="' in line, f"Missing zone_idx: {line}"
         assert 'zone_name="' in line, f"Missing zone_name: {line}"
 
-    print(f"✓ All {len(heat_demand_lines)} heat demand metrics have correct label structure")
+    print(
+        f"✓ All {len(heat_demand_lines)} heat demand metrics have correct label structure"
+    )
 
 
 def test_no_old_zone_info_metric():
@@ -174,8 +179,12 @@ def test_no_old_zone_info_metric():
         content = f.read()
 
     # Should NOT have ramses_zone_info metrics anymore
-    assert "ramses_zone_info" not in content, "Old ramses_zone_info metric should not exist"
-    assert "ramses_device_info" not in content, "Old ramses_device_info metric should not exist"
+    assert (
+        "ramses_zone_info" not in content
+    ), "Old ramses_zone_info metric should not exist"
+    assert (
+        "ramses_device_info" not in content
+    ), "Old ramses_device_info metric should not exist"
 
     print("✓ Old info metrics have been removed")
 

@@ -302,7 +302,9 @@ def test_zone_name_office_in_generated_metrics():
 
     # Ensure the generated file exists
     if not output_file.exists():
-        pytest.skip("generated.txt does not exist. Run test_sample_data_metrics_generation first.")
+        pytest.skip(
+            "generated.txt does not exist. Run test_sample_data_metrics_generation first."
+        )
 
     # Read the generated metrics
     with open(output_file, "r") as f:
@@ -324,19 +326,20 @@ def test_zone_name_office_in_generated_metrics():
 
     # Verify the Office zone appears in actual metrics
     import re
+
     office_metric_patterns = [
         r'ramses_device_temperature_celsius\{[^}]*zone_name="Office"[^}]*\}',
         r'ramses_device_setpoint_celsius\{[^}]*zone_name="Office"[^}]*\}',
-        r'ramses_heat_demand\{[^}]*zone_name="Office"[^}]*\}'
+        r'ramses_heat_demand\{[^}]*zone_name="Office"[^}]*\}',
     ]
-    
+
     office_metrics = []
     for pattern in office_metric_patterns:
         office_metrics.extend(re.findall(pattern, content))
 
-    assert len(office_metrics) > 0, (
-        f"Expected at least one metric with zone_name='Office', found {len(office_metrics)}"
-    )
+    assert (
+        len(office_metrics) > 0
+    ), f"Expected at least one metric with zone_name='Office', found {len(office_metrics)}"
 
     print(f"\n✓ Found {len(office_metrics)} Office zone metric(s)")
 
@@ -402,7 +405,11 @@ def test_all_metrics_summary():
             ("setpoint", "ramses_device_setpoint_celsius{", data_counts["setpoint"]),
             ("window_state", "ramses_zone_window_open{", data_counts["window_state"]),
             ("heat_demand", "ramses_heat_demand{", data_counts["heat_demand"]),
-            ("temperature", "ramses_device_temperature_celsius{", data_counts["temperature"]),
+            (
+                "temperature",
+                "ramses_device_temperature_celsius{",
+                data_counts["temperature"],
+            ),
             ("zone_name", 'zone_name="', data_counts["zone_name"]),
         ]
 

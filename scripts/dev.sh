@@ -29,14 +29,20 @@ cd "$PROJECT_ROOT"
 
 echo -e "${BLUE}Project root: $PROJECT_ROOT${NC}"
 
-# Check if virtual environment exists and activate it
-if [ -d "$PROJECT_ROOT/venv/bin" ]; then
-    echo -e "${BLUE}Activating virtual environment...${NC}"
+# Prefer .venv, then venv
+if [ -d "$PROJECT_ROOT/.venv/bin" ]; then
+    echo -e "${BLUE}Activating .venv...${NC}"
+    source "$PROJECT_ROOT/.venv/bin/activate"
+elif [ -d "$PROJECT_ROOT/venv/bin" ]; then
+    echo -e "${BLUE}Activating venv...${NC}"
     source "$PROJECT_ROOT/venv/bin/activate"
 else
-    echo -e "${YELLOW}Warning: No virtual environment found at $PROJECT_ROOT/venv/${NC}"
-    echo -e "${YELLOW}Consider creating one with: python -m venv venv${NC}"
+    echo -e "${YELLOW}Warning: No .venv or venv — using system python${NC}"
+    echo -e "${YELLOW}Create: python3 -m venv .venv && .venv/bin/pip install -e .${NC}"
 fi
+
+echo -e "${BLUE}Ensuring package deps (pip install -e .)...${NC}"
+pip install -q -e "$PROJECT_ROOT" || true
 
 # Default arguments - you can modify these or pass via command line
 DEFAULT_RAMSES_PORT="/dev/ttyACM0"
@@ -50,8 +56,48 @@ if [ -z "$ARGS" ]; then
     echo -e "${YELLOW}No arguments provided, using defaults: ${ARGS}${NC}"
 fi
 
+# Extract port from args (supports `--port 8000` and `--port=8000`)
+PORT="${DEFAULT_PORT}"
+if [[ "$ARGS" =~ --port[=[:space:]]*([0-9]+) ]]; then
+    PORT="${BASH_REMATCH[1]}"
+fi
+
 # Process ID tracking
 APP_PID=""
+
+# Kill anything listening on the configured HTTP port (prevents "address in use")
+kill_on_port() {
+    local port="$1"
+    local pids=""
+    # Example line:
+    # users:(("python",pid=3852599,fd=6))
+    while IFS= read -r line; do
+        pid="$(echo "$line" | sed -n 's/.*pid=\([0-9]\+\).*/\1/p')"
+        if [ -n "$pid" ]; then
+            pids="$pids $pid"
+        fi
+    done < <(ss -ltnp "sport = :$port" 2>/dev/null | awk 'NR>1')
+
+    # shellcheck disable=SC2086
+    for pid in $pids; do
+        if kill -0 "$pid" 2>/dev/null; then
+            echo -e "${YELLOW}Killing listener PID on :${port}: ${pid}${NC}"
+            kill -TERM "$pid" 2>/dev/null || true
+        fi
+    done
+
+    # Give processes a moment to shutdown gracefully.
+    sleep 0.5
+
+    # Escalate if anything is still listening.
+    while IFS= read -r line; do
+        pid="$(echo "$line" | sed -n 's/.*pid=\([0-9]\+\).*/\1/p')"
+        if [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null; then
+            echo -e "${YELLOW}Force killing listener PID on :${port}: ${pid}${NC}"
+            kill -KILL "$pid" 2>/dev/null || true
+        fi
+    done < <(ss -ltnp "sport = :$port" 2>/dev/null | awk 'NR>1')
+}
 
 # Cleanup function to kill the app when script exits
 cleanup() {
@@ -61,6 +107,10 @@ cleanup() {
         kill -TERM "$APP_PID" 2>/dev/null || true
         wait "$APP_PID" 2>/dev/null || true
     fi
+
+    # Also kill anything else that might still be bound to the port
+    # (e.g. if a previous run of this script left an orphan process).
+    kill_on_port "$PORT"
     echo -e "${GREEN}Development server stopped${NC}"
     exit 0
 }
@@ -75,6 +125,10 @@ start_app() {
         kill -TERM "$APP_PID" 2>/dev/null || true
         wait "$APP_PID" 2>/dev/null || true
     fi
+
+    # If an older dev.sh (or crashed run) left something on the port,
+    # kill it before starting a new instance.
+    kill_on_port "$PORT"
     
     echo -e "${GREEN}Starting application with args: ${ARGS}${NC}"
     echo -e "${BLUE}═══════════════════════════════════════════════════════════${NC}"
@@ -100,7 +154,7 @@ while true; do
     # Events: modify, create, delete, move
     cd "$PROJECT_ROOT"
     FILE_CHANGED=$(inotifywait -r -e modify,create,delete,move \
-        --exclude '(__pycache__|\.pyc$|\.git|venv|htmlcov|\.tox|\.pytest_cache|coverage\.xml|bandit-report\.json|\.swp$|\.swx$)' \
+        --exclude '(__pycache__|\.pyc$|\.git|venv|\.venv|htmlcov|\.tox|\.pytest_cache|coverage\.xml|bandit-report\.json|\.swp$|\.swx$)' \
         --format '%w%f' \
         "$PROJECT_ROOT/honeywell_radio_exporter/" \
         "$PROJECT_ROOT/tests/" \

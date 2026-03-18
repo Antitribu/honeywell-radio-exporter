@@ -327,18 +327,19 @@ class GrafanaDashboardUploader:
 
     def _update_datasource_uids(self, dashboard: Dict[str, Any], datasource_uid: str):
         """Recursively update datasource UIDs in dashboard panels.
-        
+
         Note: Preserves null datasources in templating variables to maintain
         default datasource behavior.
         """
         if isinstance(dashboard, dict):
             # Check if we're in a templating variable - preserve null datasources
             is_variable = (
-                "name" in dashboard and 
-                "type" in dashboard and 
-                dashboard.get("type") in ["query", "interval", "custom", "textbox", "constant", "datasource"]
+                "name" in dashboard
+                and "type" in dashboard
+                and dashboard.get("type")
+                in ["query", "interval", "custom", "textbox", "constant", "datasource"]
             )
-            
+
             # Update datasource at panel/target level (but not for variables with null datasource)
             if "datasource" in dashboard:
                 # Skip updating if this is a variable with explicitly null datasource

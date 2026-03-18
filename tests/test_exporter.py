@@ -22,7 +22,14 @@ from honeywell_radio_exporter.ramses_prometheus_exporter import RamsesPrometheus
 class MockMessage:
     """Mock RAMSES message for testing."""
 
-    def __init__(self, code="0001", verb="I", src_id="01:123456", dst_id="02:654321", payload=None):
+    def __init__(
+        self,
+        code="0001",
+        verb="I",
+        src_id="01:123456",
+        dst_id="02:654321",
+        payload=None,
+    ):
         self.code = code
         self.verb = verb
         self.src = Mock()

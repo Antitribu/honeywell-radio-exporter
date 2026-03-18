@@ -55,7 +55,9 @@ try:
     from ramses_tx.ramses import CODES_SCHEMA
 except ImportError as e:
     print(f"Error importing ramses_rf: {e}")
-    print("Make sure the ramses_rf module is available at /home/simon/src/3rd-party/ramses_rf")
+    print(
+        "Make sure the ramses_rf module is available at /home/simon/src/3rd-party/ramses_rf"
+    )
     sys.exit(1)
 
 # Configure logging
@@ -79,7 +81,11 @@ max_bytes = 10 * 1024 * 1024  # 10 MB
 backup_count = 5
 try:
     file_handler = logging.handlers.RotatingFileHandler(
-        log_file, mode="a", maxBytes=max_bytes, backupCount=backup_count, encoding="utf-8"
+        log_file,
+        mode="a",
+        maxBytes=max_bytes,
+        backupCount=backup_count,
+        encoding="utf-8",
     )
     file_handler.setLevel(logging.INFO)
     file_handler.setFormatter(logging.Formatter(log_format))
@@ -180,7 +186,9 @@ def _get_python_process_start_unix() -> tuple[float, bool]:
     return _py_process_start_unix, False
 
 
-def start_prometheus_http_services(port: int, exporter: "RamsesPrometheusExporter") -> None:
+def start_prometheus_http_services(
+    port: int, exporter: "RamsesPrometheusExporter"
+) -> None:
     """
     Verify the port is bindable, then start a background HTTP server for
     /metrics (Prometheus), / (device UI), and /api/devices (JSON).
@@ -210,7 +218,9 @@ def start_prometheus_http_services(port: int, exporter: "RamsesPrometheusExporte
     t.start()
 
 
-def _make_http_handler(exporter: "RamsesPrometheusExporter") -> Type[BaseHTTPRequestHandler]:
+def _make_http_handler(
+    exporter: "RamsesPrometheusExporter",
+) -> Type[BaseHTTPRequestHandler]:
     """Build a request handler with a closure over the exporter instance."""
 
     class ExporterHTTPRequestHandler(BaseHTTPRequestHandler):
@@ -480,20 +490,27 @@ DEVICES_UI_HTML = r"""<!DOCTYPE html>
 class RamsesPrometheusExporter:
     """Prometheus exporter for RAMSES RF messages."""
 
-    def __init__(self, port: int = 8000, ramses_port: Optional[str] = None, cache_file: Optional[str] = None):
+    def __init__(
+        self,
+        port: int = 8000,
+        ramses_port: Optional[str] = None,
+        cache_file: Optional[str] = None,
+    ):
         self.port = port
         self.ramses_port = ramses_port
         self.gateway: Optional[Gateway] = None
 
         # Cache file for persisting zone and device names
-        self.cache_file = Path(cache_file) if cache_file else Path("/tmp/ramses_rf_cache.json")
-        
+        self.cache_file = (
+            Path(cache_file) if cache_file else Path("/tmp/ramses_rf_cache.json")
+        )
+
         # Cache data structures
         # Structure: {zone_idx: {"name": zone_name, "last_seen": timestamp}}
         self.zone_name_cache: Dict[str, Dict[str, Any]] = {}
         # Structure: {device_id: {"name": device_name, "last_seen": timestamp}}
         self.device_name_cache: Dict[str, Dict[str, Any]] = {}
-        
+
         # Load cache from disk if available
         self._load_cache()
 
@@ -504,14 +521,16 @@ class RamsesPrometheusExporter:
         self.message_types = defaultdict(int)
         self.device_communications = defaultdict(int)
         self.last_message_time = time.time()
-        
+
         # Zone to device mapping tracking from zone_devices messages
         # Structure: {zone_idx: {device_role: [device_ids]}}
         self.zone_devices_map = defaultdict(lambda: defaultdict(list))
 
         # Devices seen on the bus (for human UI /api/devices)
         self._devices_lock = threading.Lock()
-        self.device_activity: Dict[str, float] = {}  # device_id -> last activity (src or dst)
+        self.device_activity: Dict[str, float] = (
+            {}
+        )  # device_id -> last activity (src or dst)
         self.device_src_message_count: Dict[str, int] = defaultdict(int)
         self.device_dest_message_count: Dict[str, int] = defaultdict(int)
         self.device_src_ack_count: Dict[str, int] = defaultdict(int)
@@ -551,7 +570,9 @@ class RamsesPrometheusExporter:
         with self._devices_lock:
             self.device_dest_message_count[dest_device] += 1
 
-    def _count_ack_for_devices(self, source_device: str, dest_device: str, verb: str) -> None:
+    def _count_ack_for_devices(
+        self, source_device: str, dest_device: str, verb: str
+    ) -> None:
         """Track simple per-device 'ack' counts based on RP replies."""
         if verb != "RP":
             return
@@ -613,13 +634,17 @@ class RamsesPrometheusExporter:
             if not device_id or device_id == "unknown":
                 continue
             zone_idx = self._get_zone_for_device(device_id)
-            zone_name = self._get_zone_name(zone_idx) if zone_idx != "unknown" else "unknown"
+            zone_name = (
+                self._get_zone_name(zone_idx) if zone_idx != "unknown" else "unknown"
+            )
             name = self._get_device_name(device_id)
             gw = self._gateway_device_info(device_id)
             last_unix = activity.get(device_id)
             last_iso: Optional[str] = None
             if last_unix is not None:
-                last_iso = datetime.fromtimestamp(last_unix, tz=timezone.utc).isoformat()
+                last_iso = datetime.fromtimestamp(
+                    last_unix, tz=timezone.utc
+                ).isoformat()
             is_boiler = device_id.startswith("13:") or device_id.startswith("10:")
             is_controller = device_id.startswith("01:")
             msg_from = int(src_counts.get(device_id, 0))
@@ -632,7 +657,9 @@ class RamsesPrometheusExporter:
                 and device_id in self.gateway.device_by_id
             )
             in_name_cache = device_id in self.device_name_cache
-            is_placeholder = msg_from == 0 and msg_to > 0 and not on_gw and not in_name_cache
+            is_placeholder = (
+                msg_from == 0 and msg_to > 0 and not on_gw and not in_name_cache
+            )
             devices.append(
                 {
                     "device_id": device_id,
@@ -641,7 +668,9 @@ class RamsesPrometheusExporter:
                     "zone_name": zone_name,
                     "last_seen_unix": last_unix,
                     "last_seen_iso": last_iso,
-                    "seconds_since_seen": round(now - last_unix, 1) if last_unix is not None else None,
+                    "seconds_since_seen": (
+                        round(now - last_unix, 1) if last_unix is not None else None
+                    ),
                     "messages_from": msg_from,
                     "messages_to": msg_to,
                     "acks_from": ack_from,
@@ -660,16 +689,24 @@ class RamsesPrometheusExporter:
             )
         return {
             "generated_at": datetime.now(timezone.utc).isoformat(),
-            "started_at": datetime.fromtimestamp(self.started_at, tz=timezone.utc).isoformat()
-            if getattr(self, "started_at", None) is not None
-            else None,
-            "uptime_seconds": round(now - self.started_at, 1)
-            if getattr(self, "started_at", None) is not None
-            else None,
-            "uptime_human": _format_duration(now - self.started_at)
-            if getattr(self, "started_at", None) is not None
-            else None,
-            "python_process_started_at": datetime.fromtimestamp(proc_start, tz=timezone.utc).isoformat(),
+            "started_at": (
+                datetime.fromtimestamp(self.started_at, tz=timezone.utc).isoformat()
+                if getattr(self, "started_at", None) is not None
+                else None
+            ),
+            "uptime_seconds": (
+                round(now - self.started_at, 1)
+                if getattr(self, "started_at", None) is not None
+                else None
+            ),
+            "uptime_human": (
+                _format_duration(now - self.started_at)
+                if getattr(self, "started_at", None) is not None
+                else None
+            ),
+            "python_process_started_at": datetime.fromtimestamp(
+                proc_start, tz=timezone.utc
+            ).isoformat(),
             "python_process_uptime_seconds": round(proc_uptime, 1),
             "python_process_uptime_human": _format_duration(proc_uptime),
             "python_process_uptime_os_accurate": proc_os,
@@ -684,7 +721,14 @@ class RamsesPrometheusExporter:
         self.messages_total = Counter(
             "ramses_messages_total",
             "Total number of RAMSES messages received",
-            ["message_type", "verb", "code", "source_device", "destination_device", "zone_name"],
+            [
+                "message_type",
+                "verb",
+                "code",
+                "source_device",
+                "destination_device",
+                "zone_name",
+            ],
         )
 
         self.message_types_counter = Counter(
@@ -709,7 +753,9 @@ class RamsesPrometheusExporter:
             "ramses_last_message_timestamp", "Timestamp of the last message received"
         )
 
-        self.message_rate = Gauge("ramses_message_rate", "Messages per second over the last minute")
+        self.message_rate = Gauge(
+            "ramses_message_rate", "Messages per second over the last minute"
+        )
 
         # Message processing metrics
         self.message_processing_duration = Histogram(
@@ -719,7 +765,9 @@ class RamsesPrometheusExporter:
         )
 
         # System information
-        self.system_info = Info("ramses_system", "Information about the RAMSES RF system")
+        self.system_info = Info(
+            "ramses_system", "Information about the RAMSES RF system"
+        )
 
         # Error counters
         self.message_errors = Counter(
@@ -919,7 +967,9 @@ class RamsesPrometheusExporter:
                     if device:
                         # Get alias from traits
                         traits = device.traits if hasattr(device, "traits") else {}
-                        alias = traits.get("alias") if isinstance(traits, dict) else None
+                        alias = (
+                            traits.get("alias") if isinstance(traits, dict) else None
+                        )
                         device_type = getattr(device, "_SLUG", None) or getattr(
                             device, "type", None
                         )
@@ -950,8 +1000,16 @@ class RamsesPrometheusExporter:
                     msg_code = str(msg.code) if msg.code else "unknown"
                     msg_code_name = self._get_code_name(msg.code)
                     msg_verb = str(msg.verb) if msg.verb else "unknown"
-                    src_id = str(msg.src.id) if msg.src and hasattr(msg.src, "id") else "unknown"
-                    dst_id = str(msg.dst.id) if msg.dst and hasattr(msg.dst, "id") else "unknown"
+                    src_id = (
+                        str(msg.src.id)
+                        if msg.src and hasattr(msg.src, "id")
+                        else "unknown"
+                    )
+                    dst_id = (
+                        str(msg.dst.id)
+                        if msg.dst and hasattr(msg.dst, "id")
+                        else "unknown"
+                    )
 
                     # Get device information with names/aliases
                     src_info = get_device_info(src_id)
@@ -964,7 +1022,9 @@ class RamsesPrometheusExporter:
 
                     # Include both code and human-readable name
                     code_display = (
-                        f"{msg_code} ({msg_code_name})" if msg_code_name != msg_code else msg_code
+                        f"{msg_code} ({msg_code_name})"
+                        if msg_code_name != msg_code
+                        else msg_code
                     )
 
                     logger.info(
@@ -1076,29 +1136,31 @@ class RamsesPrometheusExporter:
     def _load_cache(self):
         """Load zone and device name cache from disk."""
         if not self.cache_file.exists():
-            logger.info(f"No cache file found at {self.cache_file}, starting with empty cache")
+            logger.info(
+                f"No cache file found at {self.cache_file}, starting with empty cache"
+            )
             return
 
         try:
             with open(self.cache_file, "r") as f:
                 cache_data = json.load(f)
-            
+
             self.zone_name_cache = cache_data.get("zones", {})
             self.device_name_cache = cache_data.get("devices", {})
-            
+
             zone_count = len(self.zone_name_cache)
             device_count = len(self.device_name_cache)
             logger.info(
                 f"Loaded cache from {self.cache_file}: "
                 f"{zone_count} zones, {device_count} devices"
             )
-            
+
             # Log the cached data for visibility
             if zone_count > 0:
                 logger.info(f"Cached zones: {list(self.zone_name_cache.keys())}")
             if device_count > 0:
                 logger.info(f"Cached devices: {list(self.device_name_cache.keys())}")
-                
+
         except (json.JSONDecodeError, IOError) as e:
             logger.error(f"Failed to load cache from {self.cache_file}: {e}")
             logger.info("Starting with empty cache")
@@ -1113,14 +1175,14 @@ class RamsesPrometheusExporter:
                 "devices": self.device_name_cache,
                 "last_updated": datetime.now().isoformat(),
             }
-            
+
             # Write to temp file first, then rename for atomic write
             temp_file = self.cache_file.with_suffix(".tmp")
             with open(temp_file, "w") as f:
                 json.dump(cache_data, f, indent=2)
-            
+
             temp_file.replace(self.cache_file)
-            
+
             logger.debug(
                 f"Saved cache to {self.cache_file}: "
                 f"{len(self.zone_name_cache)} zones, {len(self.device_name_cache)} devices"
@@ -1132,9 +1194,9 @@ class RamsesPrometheusExporter:
         """Update zone name cache and save to disk if changed."""
         if not zone_idx or not zone_name or zone_name == "unknown":
             return
-        
+
         current_timestamp = time.time()
-        
+
         # Check if this is new or updated information
         if zone_idx not in self.zone_name_cache:
             # New zone discovered
@@ -1163,9 +1225,9 @@ class RamsesPrometheusExporter:
         """Update device name cache and save to disk if changed."""
         if not device_id or not device_name or device_name == "unknown":
             return
-        
+
         current_timestamp = time.time()
-        
+
         # Check if this is new or updated information
         if device_id not in self.device_name_cache:
             # New device discovered
@@ -1192,18 +1254,18 @@ class RamsesPrometheusExporter:
 
     def _get_zone_for_device(self, device_id: str) -> str:
         """Get zone_idx for a device by searching zone_devices_map.
-        
+
         Returns the zone_idx if device is found in any zone, otherwise 'unknown'.
         """
         if not device_id or device_id == "unknown":
             return "unknown"
-        
+
         # Search through all zones to find this device
         for zone_idx, roles in self.zone_devices_map.items():
             for device_role, device_list in roles.items():
                 if device_id in device_list:
                     return zone_idx
-        
+
         return "unknown"
 
     def _capture_message_metrics(self, msg: Message):
@@ -1217,8 +1279,12 @@ class RamsesPrometheusExporter:
         # Get human-readable code name
         code_name = self._get_code_name(msg.code)
 
-        source_device = str(msg.src.id) if msg.src and hasattr(msg.src, "id") else "unknown"
-        dest_device = str(msg.dst.id) if msg.dst and hasattr(msg.dst, "id") else "unknown"
+        source_device = (
+            str(msg.src.id) if msg.src and hasattr(msg.src, "id") else "unknown"
+        )
+        dest_device = (
+            str(msg.dst.id) if msg.dst and hasattr(msg.dst, "id") else "unknown"
+        )
 
         self._touch_device_on_bus(source_device)
         self._touch_device_on_bus(dest_device)
@@ -1230,17 +1296,21 @@ class RamsesPrometheusExporter:
         if source_device != "unknown":
             device_name = self._get_device_name(source_device)
             zone_idx = self._get_zone_for_device(source_device)
-            zone_name = self._get_zone_name(zone_idx) if zone_idx != "unknown" else "unknown"
+            zone_name = (
+                self._get_zone_name(zone_idx) if zone_idx != "unknown" else "unknown"
+            )
             self.device_last_seen.labels(
-                device_id=source_device,
-                device_name=device_name,
-                zone_name=zone_name
+                device_id=source_device, device_name=device_name, zone_name=zone_name
             ).set(time.time())
 
         # Get zone name for source device
         source_zone_idx = self._get_zone_for_device(source_device)
-        source_zone_name = self._get_zone_name(source_zone_idx) if source_zone_idx != "unknown" else "unknown"
-        
+        source_zone_name = (
+            self._get_zone_name(source_zone_idx)
+            if source_zone_idx != "unknown"
+            else "unknown"
+        )
+
         # Update counters (with zone name)
         self.messages_total.labels(
             message_type=msg_type,
@@ -1251,7 +1321,9 @@ class RamsesPrometheusExporter:
             zone_name=source_zone_name,
         ).inc()
 
-        self.message_types_counter.labels(code=code, code_name=code_name, verb=verb).inc()
+        self.message_types_counter.labels(
+            code=code, code_name=code_name, verb=verb
+        ).inc()
 
         self.device_communications_counter.labels(
             source_device=source_device, destination_device=dest_device, verb=verb
@@ -1281,9 +1353,9 @@ class RamsesPrometheusExporter:
                 message_code=code,
                 message_type=code_name,
             ).inc()
-            self.boiler_last_seen.labels(boiler_id=source_device, boiler_name=boiler_name).set(
-                current_time
-            )
+            self.boiler_last_seen.labels(
+                boiler_id=source_device, boiler_name=boiler_name
+            ).set(current_time)
 
         # Track messages TO boilers
         if is_boiler(dest_device):
@@ -1294,9 +1366,9 @@ class RamsesPrometheusExporter:
                 message_code=code,
                 message_type=code_name,
             ).inc()
-            self.boiler_last_contacted.labels(boiler_id=dest_device, boiler_name=boiler_name).set(
-                current_time
-            )
+            self.boiler_last_contacted.labels(
+                boiler_id=dest_device, boiler_name=boiler_name
+            ).set(current_time)
 
         # Update timestamp
         self.last_message_timestamp.set(time.time())
@@ -1310,23 +1382,29 @@ class RamsesPrometheusExporter:
             # Capture zone names directly from zone_name messages (code 0004)
             # This allows us to learn zone names from the actual messages rather than
             # depending on pre-configured gateway TCS zones
-            if (code == "0004" or code == "zone_name") and isinstance(msg.payload, dict):
+            if (code == "0004" or code == "zone_name") and isinstance(
+                msg.payload, dict
+            ):
                 if "zone_idx" in msg.payload and "name" in msg.payload:
                     zone_idx = msg.payload["zone_idx"]
                     zone_name = msg.payload["name"]
                     if zone_idx and zone_name:
                         # Update cache with zone name
                         self._update_zone_name_cache(zone_idx, zone_name)
-                        logger.debug(f"Captured zone name from message: {zone_idx} -> {zone_name}")
-            
+                        logger.debug(
+                            f"Captured zone name from message: {zone_idx} -> {zone_name}"
+                        )
+
             # Capture zone-to-device mappings from zone_devices messages (code 000C)
             # This tracks which devices are associated with which zones and their roles
-            if (code == "000C" or code == "zone_devices") and isinstance(msg.payload, dict):
+            if (code == "000C" or code == "zone_devices") and isinstance(
+                msg.payload, dict
+            ):
                 if "zone_idx" in msg.payload and "device_role" in msg.payload:
                     zone_idx = msg.payload["zone_idx"]
                     device_role = msg.payload["device_role"]
                     devices = msg.payload.get("devices", [])
-                    
+
                     if zone_idx and device_role:
                         # Update our zone-to-device mapping
                         if devices:
@@ -1349,12 +1427,16 @@ class RamsesPrometheusExporter:
                     temperature = float(msg.payload["temperature"])
                     device_name = self._get_device_name(source_device)
                     zone_idx = self._get_zone_for_device(source_device)
-                    zone_name = self._get_zone_name(zone_idx) if zone_idx != "unknown" else "unknown"
-                    
+                    zone_name = (
+                        self._get_zone_name(zone_idx)
+                        if zone_idx != "unknown"
+                        else "unknown"
+                    )
+
                     self.device_temperature.labels(
                         device_id=source_device,
                         device_name=device_name,
-                        zone_name=zone_name
+                        zone_name=zone_name,
                     ).set(temperature)
                     self._record_device_temperature_c(source_device, temperature)
 
@@ -1379,7 +1461,7 @@ class RamsesPrometheusExporter:
                         device_id=source_device,
                         device_name=device_name,
                         zone_idx=zone_idx,
-                        zone_name=zone_name
+                        zone_name=zone_name,
                     ).set(setpoint)
                     self._record_device_setpoint_c(source_device, setpoint)
 
@@ -1404,9 +1486,9 @@ class RamsesPrometheusExporter:
                         device_id=source_device,
                         device_name=device_name,
                         zone_idx=zone_idx,
-                        zone_name=zone_name
+                        zone_name=zone_name,
                     ).set(1 if window_open else 0)
-                    
+
                     status = "OPEN" if window_open else "CLOSED"
                     logger.debug(
                         f"Updated window state for device {source_device} ({device_name}) "
@@ -1440,7 +1522,7 @@ class RamsesPrometheusExporter:
                             device_name=device_name,
                             zone_idx=zone_idx,
                             zone_name=zone_name,
-                            mode=m
+                            mode=m,
                         ).set(0)
 
                     # Set current mode to 1
@@ -1449,7 +1531,7 @@ class RamsesPrometheusExporter:
                         device_name=device_name,
                         zone_idx=zone_idx,
                         zone_name=zone_name,
-                        mode=mode
+                        mode=mode,
                     ).set(1)
 
                     logger.debug(
@@ -1466,7 +1548,9 @@ class RamsesPrometheusExporter:
                     heat_demand = float(msg.payload["heat_demand"])
                     # Heat demand can be zone-specific (zone_idx) or system-wide (domain_id)
                     # Use zone_idx if available, otherwise use domain_id, or '00' as fallback
-                    zone_idx = msg.payload.get("zone_idx", msg.payload.get("domain_id", "00"))
+                    zone_idx = msg.payload.get(
+                        "zone_idx", msg.payload.get("domain_id", "00")
+                    )
                     device_name = self._get_device_name(source_device)
                     zone_name = self._get_zone_name(zone_idx)
 
@@ -1474,7 +1558,7 @@ class RamsesPrometheusExporter:
                         device_id=source_device,
                         device_name=device_name,
                         zone_idx=zone_idx,
-                        zone_name=zone_name
+                        zone_name=zone_name,
                     ).set(heat_demand)
 
                     percentage = heat_demand * 100
@@ -1492,20 +1576,24 @@ class RamsesPrometheusExporter:
                     remaining_seconds = float(msg.payload["remaining_seconds"])
                     device_name = self._get_device_name(source_device)
                     zone_idx = self._get_zone_for_device(source_device)
-                    zone_name = self._get_zone_name(zone_idx) if zone_idx != "unknown" else "unknown"
+                    zone_name = (
+                        self._get_zone_name(zone_idx)
+                        if zone_idx != "unknown"
+                        else "unknown"
+                    )
 
                     # Update the remaining seconds until next sync
                     self.system_sync_remaining.labels(
                         device_id=source_device,
                         device_name=device_name,
-                        zone_name=zone_name
+                        zone_name=zone_name,
                     ).set(remaining_seconds)
 
                     # Update the timestamp of when this sync message was received
                     self.system_sync_timestamp.labels(
                         device_id=source_device,
                         device_name=device_name,
-                        zone_name=zone_name
+                        zone_name=zone_name,
                     ).set(time.time())
 
                     next_sync_time = msg.payload.get("_next_sync", "unknown")
@@ -1527,7 +1615,7 @@ class RamsesPrometheusExporter:
                         device_type = log_entry[3]  # e.g., 'dhw_sensor'
                         zone_idx = log_entry[4]  # e.g., 'FA'
                         device_id = log_entry[5] if len(log_entry) > 5 else "unknown"
-                        
+
                         # Track comms_fault specifically
                         if fault_type == "comms_fault":
                             # Increment counter
@@ -1535,25 +1623,25 @@ class RamsesPrometheusExporter:
                                 device_id=device_id,
                                 device_type=device_type,
                                 zone_idx=zone_idx,
-                                event_type=event_type
+                                event_type=event_type,
                             ).inc()
-                            
+
                             # Update state (0=ok/restore, 1=fault)
                             fault_state = 0 if event_type == "restore" else 1
                             self.comms_fault_state.labels(
                                 device_id=device_id,
                                 device_type=device_type,
-                                zone_idx=zone_idx
+                                zone_idx=zone_idx,
                             ).set(fault_state)
-                            
+
                             # Update timestamp
                             self.comms_fault_last_timestamp.labels(
                                 device_id=device_id,
                                 device_type=device_type,
                                 zone_idx=zone_idx,
-                                event_type=event_type
+                                event_type=event_type,
                             ).set(time.time())
-                            
+
                             status = "RESTORED" if event_type == "restore" else "FAULT"
                             logger.info(
                                 f"Communications fault {status}: device {device_id} "
@@ -1564,7 +1652,11 @@ class RamsesPrometheusExporter:
 
             # Extract boiler setpoint from payload if available
             # Boiler setpoint appears in message code 22D9 (boiler_setpoint)
-            if isinstance(msg.payload, dict) and "setpoint" in msg.payload and code == "22D9":
+            if (
+                isinstance(msg.payload, dict)
+                and "setpoint" in msg.payload
+                and code == "22D9"
+            ):
                 try:
                     setpoint = float(msg.payload["setpoint"])
                     boiler_name = self._get_device_name(source_device)
@@ -1632,60 +1724,72 @@ class RamsesPrometheusExporter:
                         )
 
                 except (ValueError, TypeError, KeyError) as e:
-                    logger.warning(f"Could not parse boiler modulation/status from payload: {e}")
+                    logger.warning(
+                        f"Could not parse boiler modulation/status from payload: {e}"
+                    )
 
         # DHW (Domestic Hot Water) message handling
         if code_name in ["dhw_temp", "dhw_params", "dhw_mode"]:
             try:
                 # Get controller device (usually 01:xxxxxx)
-                controller_id = source_device if source_device.startswith("01:") else destination_device
+                controller_id = (
+                    source_device
+                    if source_device.startswith("01:")
+                    else destination_device
+                )
                 controller_name = self._get_device_name(controller_id)
-                
+
                 if code_name == "dhw_temp" and msg.payload:
                     # Handle DHW temperature
-                    if "temperature" in msg.payload and msg.payload["temperature"] is not None:
+                    if (
+                        "temperature" in msg.payload
+                        and msg.payload["temperature"] is not None
+                    ):
                         temperature = float(msg.payload["temperature"])
                         dhw_idx = msg.payload.get("dhw_idx", "00")
                         self.dhw_temperature.labels(
                             dhw_idx=dhw_idx,
                             controller_id=controller_id,
-                            controller_name=controller_name
+                            controller_name=controller_name,
                         ).set(temperature)
                         self._record_device_temperature_c(controller_id, temperature)
                         logger.debug(
                             f"Updated DHW temperature for {dhw_idx}: {temperature:.2f}°C"
                         )
-                
+
                 elif code_name == "dhw_params" and msg.payload:
                     # Handle DHW setpoint
-                    if "setpoint" in msg.payload and msg.payload["setpoint"] is not None:
+                    if (
+                        "setpoint" in msg.payload
+                        and msg.payload["setpoint"] is not None
+                    ):
                         setpoint = float(msg.payload["setpoint"])
                         dhw_idx = msg.payload.get("dhw_idx", "00")
                         self.dhw_setpoint.labels(
                             dhw_idx=dhw_idx,
                             controller_id=controller_id,
-                            controller_name=controller_name
+                            controller_name=controller_name,
                         ).set(setpoint)
                         self._record_device_setpoint_c(controller_id, setpoint)
                         logger.debug(
                             f"Updated DHW setpoint for {dhw_idx}: {setpoint:.2f}°C"
                         )
-                
+
                 elif code_name == "dhw_mode" and msg.payload:
                     # Handle DHW active state and mode
                     dhw_idx = msg.payload.get("dhw_idx", "00")
-                    
+
                     if "active" in msg.payload:
                         active = bool(msg.payload["active"])
                         self.dhw_active.labels(
                             dhw_idx=dhw_idx,
                             controller_id=controller_id,
-                            controller_name=controller_name
+                            controller_name=controller_name,
                         ).set(1 if active else 0)
                         logger.debug(
                             f"Updated DHW active state for {dhw_idx}: {'ACTIVE' if active else 'INACTIVE'}"
                         )
-                    
+
                     if "mode" in msg.payload:
                         mode = str(msg.payload["mode"])
                         # Clear previous mode entries for this DHW
@@ -1695,12 +1799,10 @@ class RamsesPrometheusExporter:
                             dhw_idx=dhw_idx,
                             controller_id=controller_id,
                             controller_name=controller_name,
-                            mode=mode
+                            mode=mode,
                         ).set(1)
-                        logger.debug(
-                            f"Updated DHW mode for {dhw_idx}: {mode}"
-                        )
-            
+                        logger.debug(f"Updated DHW mode for {dhw_idx}: {mode}")
+
             except (ValueError, TypeError, KeyError) as e:
                 logger.warning(f"Could not parse DHW message from payload: {e}")
 
@@ -1768,7 +1870,10 @@ def main():
 
     parser = argparse.ArgumentParser(description="RAMSES RF Prometheus Exporter")
     parser.add_argument(
-        "--port", type=int, default=8000, help="Prometheus HTTP server port (default: 8000)"
+        "--port",
+        type=int,
+        default=8000,
+        help="Prometheus HTTP server port (default: 8000)",
     )
     parser.add_argument(
         "--ramses-port",

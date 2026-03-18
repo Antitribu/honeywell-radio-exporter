@@ -1,24 +1,20 @@
 # How to Run Honeywell Radio Exporter
 
+Requires **`.mysql_creds`** (see README). Migrations run on startup.
+
 ## Quick Start
 
 ### Basic Usage (with RAMSES RF device)
 
 ```bash
-# Activate virtual environment
 source venv/bin/activate
 
-# Run with default settings (port 8000, device /dev/ttyACM0)
 python -m honeywell_radio_exporter
-
-# Or specify your USB device
-python -m honeywell_radio_exporter --ramses-port /dev/ttyUSB0
-
-# Custom port for Prometheus metrics
 python -m honeywell_radio_exporter --ramses-port /dev/ttyUSB0 --port 9090
-
-# With debug logging
 python -m honeywell_radio_exporter --ramses-port /dev/ttyUSB0 --log-level DEBUG
+
+# HTTP + DB only (no USB watcher)
+python -m honeywell_radio_exporter --no-device
 ```
 
 ### Without Virtual Environment
@@ -35,14 +31,28 @@ honeywell-radio-exporter --ramses-port /dev/ttyUSB0
 ## Command Line Options
 
 ```
---port PORT              Prometheus HTTP server port (default: 8000)
---ramses-port DEVICE     RAMSES RF device port (default: /dev/ttyACM0)
---log-level LEVEL        Logging level: DEBUG, INFO, WARNING, ERROR (default: INFO)
+--port PORT              HTTP port (default: 8000): /ui/, /metrics/, /api/devices
+--host ADDR              Bind address (default: 0.0.0.0 = all interfaces, e.g. laptop on LAN).
+                         Use `--host 127.0.0.1` for local-only.
+--ramses-port DEVICE     RAMSES RF serial device (default: /dev/ttyACM0)
+--gateway-type auto|hgi80|evofw3
+                         HGI80 vs evofw3: **auto** uses USB VID / by-id path; plain ttyACM0
+                         often cannot be told apart (ramses_rf warns, assumes evofw3). Set
+                         **hgi80** for Honeywell HGI80 or **evofw3** for ESP32 firmware. With
+                         CLI **auto**, env **`RAMSES_GATEWAY_TYPE=hgi80`** (or evofw3) applies.
+--no-device              Do not start USB watcher (consumer still runs)
+--log-level LEVEL        DEBUG, INFO, WARNING, ERROR (default: INFO)
 ```
+
+Endpoints: **`/`** → **`/ui/`**; **`/api/devices`** JSON (`puzzle_log`, **`boiler_status`**: OpenTherm `10:` flame/CH/DHW/flow from live RAMSES); **`/api/messages/by_code?code=30C9&limit=25`**; **`/api/events`** SSE; **`/metrics/`** Prometheus.
 
 ## Environment Variables
 
-- `RAMSES_RF_PATH`: Path to ramses_rf module (default: `/home/simon/src/3rd-party/ramses_rf/src`)
+- `LOG_ROTATE_ON_START`: If `1` (default), non-empty `logs/messages.log` is renamed to `.1` on startup (older `.N` shifted); set to `0` to append. Raw bus log `logs/raw_messages/raw_messages.log` is **not** rotated on start (only by size via RotatingFileHandler).
+- `MYSQL_CREDS_PATH`: Override path to creds file
+- `HTTP_BIND`: Default bind address (same as `--host`; default `0.0.0.0`)
+- `RAMSES_GATEWAY_TYPE`: `hgi80` or `evofw3` when `--gateway-type auto` (see above).
+- `RAMSES_RF_PATH`: Path to ramses_rf `src` (default: `/home/simon/src/3rd-party/ramses_rf/src`)
 - `PYTHONUNBUFFERED`: Set to `1` for immediate log output
 
 ## Examples
@@ -78,9 +88,8 @@ venv/bin/python -m honeywell_radio_exporter --ramses-port /dev/ttyUSB0
 # Note: This will start the metrics server but won't connect to hardware
 venv/bin/python -m honeywell_radio_exporter --port 8000
 # Then in another terminal:
-curl http://localhost:8000/metrics
-# Device list (browser): http://localhost:8000/
-# Same data as JSON: curl http://localhost:8000/api/devices
+curl http://localhost:8000/metrics/
+# UI: http://localhost:8000/ui/  |  JSON: curl http://localhost:8000/api/devices
 ```
 
 ## Finding Your USB Device
@@ -104,7 +113,7 @@ sudo usermod -a -G dialout $USER
    ```bash
    curl http://localhost:8000/metrics
    ```
-1. **Device UI**: open `http://localhost:8000/` or `curl http://localhost:8000/api/devices`
+1. **Device UI**: `http://localhost:8000/ui/` or `curl http://localhost:8000/api/devices`
 1. **Check Prometheus metrics**: Look for metrics like:
    - `ramses_messages_total`
    - `ramses_message_types_total`
