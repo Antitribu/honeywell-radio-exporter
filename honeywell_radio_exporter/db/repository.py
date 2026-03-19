@@ -1119,27 +1119,53 @@ class Repository:
 
     def list_devices_for_api(self) -> List[Dict[str, Any]]:
         cur = self.conn.cursor()
+        # `devices.zone` is historically written as either a zone label or a zone_idx.
+        # We normalize both fields using a LEFT JOIN to the `zones` table so the UI can
+        # always display the human-readable zone name.
         cur.execute("""
-            SELECT device_id, name, zone, type, last_seen, last_seen_from, last_seen_to, last_ack, zone_temp_report,
-                   messages_from, messages_to, acks_from, acks_to,
-                   setpoint, temperature, heat_demand, battery_pct, battery_low,
-                   window_state
-            FROM devices
-            ORDER BY device_id
+            SELECT
+                d.device_id,
+                d.name,
+                d.zone AS zone_raw,
+                d.type,
+                d.last_seen,
+                d.last_seen_from,
+                d.last_seen_to,
+                d.last_ack,
+                d.zone_temp_report,
+                d.messages_from,
+                d.messages_to,
+                d.acks_from,
+                d.acks_to,
+                d.setpoint,
+                d.temperature,
+                d.heat_demand,
+                d.battery_pct,
+                d.battery_low,
+                d.window_state,
+                z.zone_idx AS matched_zone_idx,
+                z.name AS matched_zone_name
+            FROM devices d
+            LEFT JOIN zones z
+              ON z.zone_idx = d.zone OR z.name = d.zone
+            ORDER BY d.device_id
             """)
         rows = cur.fetchall()
         out = []
         for r in rows:
             mf, mt = int(r["messages_from"] or 0), int(r["messages_to"] or 0)
             dch, dcdesc = describe_device_class(r["device_id"])
+            zone_raw = r.get("zone_raw") or "unknown"
+            zone_idx = r.get("matched_zone_idx") or zone_raw
+            zone_name = r.get("matched_zone_name") or zone_raw
             out.append(
                 {
                     "device_id": r["device_id"],
                     "device_class": dch.upper() if dch else None,
                     "device_class_description": dcdesc,
                     "name": r["name"] or "unknown",
-                    "zone_idx": r["zone"] or "unknown",
-                    "zone_name": r["zone"] or "unknown",
+                    "zone_idx": zone_idx,
+                    "zone_name": zone_name,
                     "last_seen_iso": (
                         r["last_seen"].isoformat() + "Z" if r["last_seen"] else None
                     ),
