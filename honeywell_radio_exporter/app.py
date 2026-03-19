@@ -190,6 +190,7 @@ def main() -> None:
             host=args.host,
             live_events=live,
             runtime_versions=runtime_versions,
+            stop_event=stop,
         )
         log.info(
             "HTTP listening on %s:%s (/ui/ /api/devices /api/events /metrics/)",

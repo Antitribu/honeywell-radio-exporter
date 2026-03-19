@@ -61,6 +61,7 @@ def make_handler(
     metrics_refresh: Callable[[], None],
     get_meta: Callable[[], Dict[str, Any]],
     live_events: Optional[LiveNotifier] = None,
+    stop_event: Optional[threading.Event] = None,
 ) -> Type[BaseHTTPRequestHandler]:
     class H(BaseHTTPRequestHandler):
         def log_message(self, fmt: str, *args: Any) -> None:
@@ -69,6 +70,36 @@ def make_handler(
         def do_GET(self) -> None:
             path = urlparse(self.path).path.rstrip("/") or "/"
             try:
+                if path == "/graceful_shutdown":
+                    # A clean shutdown endpoint intended for development.
+                    # It stops consumer/janitor/watchers via the shared `stop_event`,
+                    # and stops this HTTP server loop so the main process can exit.
+                    msg = {
+                        "status": "ok",
+                        "message": "Shutting down gracefully. Server will exit shortly.",
+                    }
+                    b = json.dumps(msg).encode("utf-8")
+                    self.send_response(200)
+                    self.send_header("Content-Type", "application/json; charset=utf-8")
+                    self.send_header("Cache-Control", "no-store")
+                    self.send_header("Content-Length", str(len(b)))
+                    self.end_headers()
+                    self.wfile.write(b)
+
+                    def _shutdown() -> None:
+                        try:
+                            if stop_event:
+                                stop_event.set()
+                        finally:
+                            # Stop ThreadingHTTPServer. This will cause serve_forever() to return.
+                            try:
+                                self.server.shutdown()
+                            except Exception:
+                                pass
+
+                    # Avoid shutdown from the request thread in case the server waits for it.
+                    threading.Thread(target=_shutdown, daemon=True).start()
+                    return
                 if path == "" or path == "/":
                     self.send_response(302)
                     self.send_header("Location", "/ui/")
@@ -877,6 +908,7 @@ def start_http_server(
     host: str = "0.0.0.0",
     live_events: Optional[LiveNotifier] = None,
     runtime_versions: Optional[Dict[str, Any]] = None,
+    stop_event: Optional[threading.Event] = None,
 ) -> ThreadingHTTPServer:
     global _app_started_at, _py_process_start
     if _app_started_at == 0:
@@ -902,7 +934,14 @@ def start_http_server(
     def refresh() -> None:
         refresh_metrics_from_db(creds)
 
-    handler = make_handler(creds, load_dashboard_fn, refresh, meta, live_events)
+    handler = make_handler(
+        creds,
+        load_dashboard_fn,
+        refresh,
+        meta,
+        live_events,
+        stop_event=stop_event,
+    )
     bind = host.strip() or "0.0.0.0"
     try:
         httpd = ThreadingHTTPServer((bind, port), handler)

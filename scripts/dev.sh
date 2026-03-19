@@ -149,11 +149,20 @@ start_app
 
 # Watch for changes in Python files and configuration files
 while true; do
+    # If the exporter process exited (e.g. via /graceful_shutdown),
+    # restart automatically without waiting for the next file change.
+    if [ ! -z "$APP_PID" ] && ! kill -0 "$APP_PID" 2>/dev/null; then
+        echo -e "\n${YELLOW}Exporter PID $APP_PID exited; restarting...${NC}"
+        sleep 0.5
+        start_app
+        continue
+    fi
+
     # Wait for file changes using inotifywait
     # Watch: .py files, pyproject.toml, requirements.txt
     # Events: modify, create, delete, move
     cd "$PROJECT_ROOT"
-    FILE_CHANGED=$(inotifywait -r -e modify,create,delete,move \
+    FILE_CHANGED=$(inotifywait -t 2 -r -e modify,create,delete,move \
         --exclude '(__pycache__|\.pyc$|\.git|venv|\.venv|htmlcov|\.tox|\.pytest_cache|coverage\.xml|bandit-report\.json|\.swp$|\.swx$)' \
         --format '%w%f' \
         "$PROJECT_ROOT/honeywell_radio_exporter/" \

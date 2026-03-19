@@ -25,6 +25,37 @@ class Repository:
     def __init__(self, conn):
         self.conn = conn
 
+    def _code_name_for_code(self, code: str) -> Optional[str]:
+        """
+        Best-effort mapping from a RAMSES message `code` to its human `code_name`.
+
+        Used when rebuilding `message_code_counts` after pruning messages (janitor),
+        so the UI can keep showing the Type Name column.
+        """
+        try:
+            from ramses_tx.message import CODE_NAMES  # type: ignore[import-not-found]
+            from ramses_tx.ramses import CODES_SCHEMA  # type: ignore[import-not-found]
+        except Exception:
+            return None
+
+        c = (code or "").strip()
+        if not c:
+            return None
+
+        # ramses_tx often keys by upper-case string codes like "0004"
+        for key in (c, c.upper(), c.lower()):
+            if key in CODE_NAMES:
+                cn = CODE_NAMES.get(key)
+                return cn or None
+
+        for code_key, schema in CODES_SCHEMA.items():
+            if str(code_key) == c or str(code_key) == c.upper() or str(code_key) == c.lower():
+                n = schema.get("name")
+                if n:
+                    return str(n)
+
+        return None
+
     def insert_message(
         self,
         *,
@@ -506,10 +537,28 @@ class Repository:
         """Rebuild counts from messages (e.g. after janitor prune)."""
         cur = self.conn.cursor()
         cur.execute("DELETE FROM message_code_counts")
-        cur.execute("""
-            INSERT INTO message_code_counts (code, code_name, message_count, last_message_at)
-            SELECT code, NULL, COUNT(*), MAX(received_at) FROM messages GROUP BY code
-            """)
+        cur.execute(
+            """
+            SELECT
+                code,
+                COUNT(*) AS cnt,
+                MAX(received_at) AS last_at
+            FROM messages
+            GROUP BY code
+            """
+        )
+        rows = cur.fetchall() or []
+        for r in rows:
+            c = r["code"]
+            cn = self._code_name_for_code(c)
+            # Insert with computed cn (may be None if mapping unavailable)
+            cur.execute(
+                """
+                INSERT INTO message_code_counts (code, code_name, message_count, last_message_at)
+                VALUES (%s, %s, %s, %s)
+                """,
+                (c, cn, int(r["cnt"] or 0), r["last_at"]),
+            )
 
     def list_zones_for_api(self) -> List[Dict[str, Any]]:
         cur = self.conn.cursor()
